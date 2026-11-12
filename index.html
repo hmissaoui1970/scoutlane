@@ -1,0 +1,1084 @@
+<meta charset="utf-8">
+<title>Scout Lane</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap">
+<style>
+/* Layout: soft grey canvas holding one white rounded app frame: slim icon rail | header row | left card column (truck, gauge, log, preferences) + right work area (truck/trailer hero, route plan, match cards, postings). */
+:root{
+  /* brand: Scout Lane logo — electric blue on night navy, silver neutrals, sunset orange as the second accent */
+  --canvas:#E9EEF5; --frame:#F6F8FC; --card:#FFFFFF; --ink:#0C1630; --muted:#5A6680; --faint:#97A2B8;
+  --line:#E1E7F0; --soft:#F0F4FA; --green:#1768E5; --green-ink:#FFFFFF; --green-soft:#E7F0FE; --green-line:#8DB5F5;
+  --blue:#E8741C; --blue-soft:#FFF1E4; --amber:#C77A0A; --amber-soft:#FFF4E0; --red:#D0342C; --red-soft:#FDECEA;
+  --ok:#0F9D63; --hatch:#E4EAF3; --steel:#C3CCDA; --steel-dark:#26314A; --shadow:0 1px 2px rgba(12,22,48,.05),0 12px 32px rgba(12,22,48,.07);
+  --f:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --fd:"Sora","Plus Jakarta Sans",system-ui,sans-serif;
+}
+:root{color-scheme:light}
+*{box-sizing:border-box}
+body{background:var(--canvas);color:var(--ink);font-family:var(--f);font-size:13px;line-height:1.45;-webkit-font-smoothing:antialiased}
+.page{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 32px}
+.frame{max-width:1440px;margin:0 auto;background:var(--frame);border-radius:20px;box-shadow:var(--shadow);display:grid;grid-template-columns:56px minmax(0,1fr);overflow:hidden;border:1px solid var(--line)}
+/* rail */
+.rail{border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 0;background:var(--card)}
+.logo{width:30px;height:30px;border-radius:8px;background:var(--green);color:var(--green-ink);display:grid;place-items:center;font-weight:700;font-size:15px;margin-bottom:10px}
+.ri{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;color:var(--muted)}
+.ri.on{background:var(--green-soft);color:var(--green)}
+.ri svg{width:17px;height:17px}
+.rail .grow{flex:1}
+/* main */
+.main{min-width:0;padding:14px 18px 22px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding-bottom:12px}
+.crumb{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12.5px;flex-wrap:wrap}
+.crumb .cur{background:var(--green-soft);color:var(--green);padding:3px 10px;border-radius:7px;font-weight:500}
+.tb-icons{display:flex;gap:8px}
+.tb-icons span{width:30px;height:30px;border:1px solid var(--line);border-radius:9px;display:grid;place-items:center;color:var(--muted);background:var(--card)}
+.tb-icons svg{width:15px;height:15px}
+.head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.head h1{font-size:21px;font-weight:600;margin:0;letter-spacing:-.01em;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:500;padding:3px 10px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--muted)}
+.status i{width:6px;height:6px;border-radius:50%;background:var(--amber)}
+.status.live i{background:var(--green);animation:pulse 1.2s infinite}
+@keyframes pulse{50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.status.live i{animation:none}}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+button{font:inherit;font-weight:500;cursor:pointer;border-radius:10px;padding:8px 14px;border:1px solid var(--line);background:var(--card);color:var(--ink);display:inline-flex;align-items:center;gap:7px}
+button svg{width:15px;height:15px}
+button.primary{background:var(--green);border-color:var(--green);color:var(--green-ink)}
+button.on{border-color:var(--green-line);background:var(--green-soft);color:var(--green)}
+button:disabled{opacity:.5;cursor:default}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,th:focus-visible{outline:2px solid var(--green);outline-offset:1px}
+.layout{display:grid;grid-template-columns:290px minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:980px){.layout{grid-template-columns:minmax(0,1fr)}.frame{grid-template-columns:minmax(0,1fr)}.rail{display:none}}
+.col{display:flex;flex-direction:column;gap:14px;min-width:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+.card h2{font-size:14px;font-weight:600;margin:0 0 12px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.card h2 small{font-weight:400;color:var(--muted);font-size:12px}
+.lbl,label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:4px}
+.val{font-weight:500}
+input[type=text],input[type=number],select,textarea{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:9px;padding:7px 9px;width:100%}
+textarea{font-family:ui-monospace,Consolas,monospace;font-size:12px;min-height:118px;resize:vertical}
+.f{margin-bottom:10px}.f:last-child{margin-bottom:0}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center}
+.hint{font-size:11.5px;color:var(--faint)}
+hr.sep{border:0;border-top:1px solid var(--line);margin:12px 0}
+/* truck info */
+.driver{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--green-soft);color:var(--green);display:grid;place-items:center;font-weight:600}
+.driver .who{flex:1;min-width:0}
+.driver .who b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chk{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:8px;padding:4px 9px;font-size:12px;cursor:pointer;margin:0;color:var(--ink)}
+.chk input{accent-color:var(--green);margin:0}
+.chk:has(input:checked){border-color:var(--green-line);background:var(--green-soft)}
+.lane{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;margin:12px 0}
+.lane b{font-weight:600;font-size:13px}
+.lane small{display:block;color:var(--muted);font-size:11px;max-width:90px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.track{position:relative;height:2px;background:repeating-linear-gradient(90deg,var(--steel) 0 6px,transparent 6px 10px)}
+.track i{position:absolute;top:50%;left:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:var(--ink);box-shadow:0 0 0 3px var(--card)}
+/* gauge */
+.gauge{display:grid;grid-template-columns:118px 1fr;gap:14px;align-items:center}
+.gauge svg{width:118px;height:118px}
+.gauge .big{font-size:22px;font-weight:600;letter-spacing:-.01em}
+.gauge .big small{font-size:11.5px;color:var(--muted);font-weight:400;margin-left:3px}
+/* log */
+.log{display:flex;flex-direction:column;max-height:260px;overflow-y:auto}
+.log .e{display:grid;grid-template-columns:22px 1fr;gap:10px;position:relative;padding-bottom:12px}
+.log .e:not(:last-child)::before{content:"";position:absolute;left:10px;top:22px;bottom:2px;border-left:1px dashed var(--line)}
+.log .e span.ic{width:22px;height:22px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;color:var(--muted);background:var(--card)}
+.log .e span.ic svg{width:12px;height:12px}
+.log time{font-size:11px;color:var(--faint)}
+.log p{margin:1px 0 0}
+/* hero */
+.hero{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 16px 10px;overflow:hidden}
+.rig{display:grid;grid-template-columns:200px minmax(0,1fr);align-items:end}
+.cab svg{width:100%;height:auto;display:block}
+.trailer{border:2px solid var(--steel);border-radius:6px 10px 4px 4px;padding:8px;background:var(--card);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;min-height:196px;margin-bottom:46px;position:relative}
+.trailer::after{content:"";position:absolute;left:-2px;right:-2px;bottom:-14px;height:10px;background:var(--steel);border-radius:0 0 4px 4px}
+.slot{border:1px solid var(--line);border-radius:8px;padding:8px;position:relative;font-size:11.5px;display:flex;flex-direction:column;gap:2px;min-width:0;background:var(--card)}
+.slot.full{background:repeating-linear-gradient(135deg,var(--card) 0 7px,var(--hatch) 7px 8px);border-color:var(--green-line)}
+.slot.full.pin{border-color:var(--blue)}
+.slot .sid{color:var(--muted);font-size:11px}
+.slot .dotg{position:absolute;top:9px;right:9px;width:6px;height:6px;border-radius:50%;background:var(--green)}
+.slot.pin .dotg{background:var(--blue)}
+.slot b{font-weight:600;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.slot .mt{margin-top:auto}
+.slot.empty{align-items:center;justify-content:center;color:var(--faint)}
+.slot.empty .plus{width:22px;height:22px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;font-size:14px}
+.wheels{position:relative;height:0}
+.wheels .w{position:absolute;bottom:4px;width:44px;height:44px;border-radius:50%;background:var(--steel-dark);box-shadow:inset 0 0 0 9px var(--steel-dark),inset 0 0 0 15px var(--steel)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:0;border-top:1px solid var(--line);margin-top:6px;padding-top:12px}
+.kpi{padding:0 12px;border-left:1px solid var(--line)}
+.kpi:first-child{border-left:0;padding-left:0}
+.kpi .k{font-size:11.5px;color:var(--muted)}
+.kpi .v{font-size:17px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.kpi .v.g{color:var(--green)}
+@media (max-width:760px){.rig{grid-template-columns:minmax(0,1fr)}.cab{display:none}.trailer{grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:12px}.trailer::after,.wheels{display:none}.kpi{padding:6px 0;border-left:0}}
+/* route */
+.routegrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+@media (max-width:1150px){.routegrid{grid-template-columns:minmax(0,1fr)}}
+.leg{display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+.leg:last-child{border-bottom:0}
+.leg .ix{width:24px;height:24px;border-radius:7px;background:var(--green-soft);color:var(--green);display:grid;place-items:center;font-size:11px;font-weight:600}
+.leg.dh .ix{background:var(--soft);color:var(--muted)}
+.leg .what{font-weight:500}
+.leg .sub{font-size:11.5px;color:var(--muted)}
+.leg .amt{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+.hos{display:inline-block;margin-top:3px;font-size:11px;font-weight:500;color:var(--amber);background:var(--amber-soft);padding:1px 7px;border-radius:6px}
+svg.map{width:100%;height:auto;background:var(--soft);border-radius:10px;display:block}
+.empty{padding:22px;text-align:center;color:var(--muted)}
+/* matches */
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.search{position:relative}
+.search svg{position:absolute;left:9px;top:50%;width:14px;height:14px;margin-top:-7px;color:var(--faint)}
+.search input{padding-left:28px;width:210px}
+.tools select{width:auto}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border:0;border-radius:0;padding:7px 11px}
+.seg button.sel{background:var(--soft);font-weight:600}
+.cards{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(262px,1fr);gap:12px;overflow-x:auto;padding-bottom:10px;scroll-snap-type:x proximity}
+.ship{border:1px solid var(--line);border-radius:12px;padding:12px;scroll-snap-align:start;display:flex;flex-direction:column;gap:10px;background:var(--card)}
+.ship.pinned{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue)}
+.ship-h{display:flex;align-items:center;gap:8px}
+.ship-h .bx{width:18px;height:18px;color:var(--muted)}
+.ship-h b{font-weight:600;flex:1;min-width:0}
+.pill{font-size:11px;font-weight:500;padding:2px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.pill.g{background:var(--green-soft);border-color:var(--green-line);color:var(--green)}
+.pill.b{background:var(--blue-soft);border-color:var(--blue);color:var(--blue)}
+.pill.a{background:var(--amber-soft);border-color:var(--amber);color:var(--amber)}
+.kv{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 8px;border-top:1px solid var(--line);padding-top:10px;margin:0}
+.kv div{min-width:0}
+.kv dt{font-size:11px;color:var(--muted)}
+.kv dd{margin:1px 0 0;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+.ship button{justify-content:center;width:100%}
+.ship .meta{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);gap:6px}
+.scorebar{height:4px;border-radius:2px;background:var(--soft);overflow:hidden}
+.scorebar i{display:block;height:100%;background:var(--green)}
+.tbl{overflow:auto;max-height:520px;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{padding:8px 10px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--line)}
+th{position:sticky;top:0;background:var(--soft);font-size:11.5px;font-weight:500;color:var(--muted);cursor:pointer;user-select:none}
+th[aria-sort]{color:var(--ink)}
+th[aria-sort="descending"]::after{content:" ↓"}
+th[aria-sort="ascending"]::after{content:" ↑"}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.star{color:var(--amber)}
+/* funnel */
+.funnel{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
+.stage{border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.stage .n{font-size:16px;font-weight:600;font-variant-numeric:tabular-nums}
+.stage .t{font-size:11px;color:var(--muted)}
+.stage.rej .n{color:var(--red)}
+.stage.good{background:var(--green-soft);border-color:var(--green-line)}
+.stage.good .n{color:var(--green)}
+/* parser */
+.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media (max-width:760px){.split{grid-template-columns:minmax(0,1fr)}}
+.parsed{display:flex;flex-direction:column;gap:6px}
+.pl{border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:12px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.pl.bad{border-color:var(--red);background:var(--red-soft)}
+.pl code{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:var(--muted);display:block;margin-top:2px;white-space:pre-wrap;word-break:break-word}
+.pl .st{font-weight:600}
+.pl.bad .st{color:var(--red)}
+.pl:not(.bad) .st{color:var(--green)}
+.foot{max-width:1440px;margin:12px auto 0;font-size:11.5px;color:var(--muted)}
+[hidden]{display:none!important}
+/* logo crops from the 1568×784 artwork: wordmark x75–1450 y40–590, "S" mark x190–520 y255–585 */
+.brandlogo{width:200px;height:80px;border-radius:10px;flex:none;background:#0A1222 url("scout-lane-logo.webp") no-repeat;background-size:228.1px 114px;background-position:-10.9px -5.8px}
+.rail .logo{width:38px;height:38px;border-radius:10px;background:#0A1222 url("scout-lane-logo.webp") no-repeat;background-size:180.6px 90.3px;background-position:-21.9px -29.4px}
+.topbar .left{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+@media (max-width:520px){.brandlogo{width:150px;height:60px;background-size:171.1px 85.5px;background-position:-8.2px -4.4px}}
+input[type=tel]{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:9px;padding:7px 9px;width:100%}
+.chip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--soft);border-radius:8px;padding:3px 3px 3px 9px;font-size:12px}
+.chip button{border:0;padding:0 7px;background:transparent;color:var(--muted);border-radius:6px;font-size:15px;line-height:1.2}
+.inrow{display:flex;gap:6px}.inrow input{flex:1;min-width:0}
+label.chkline{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink);margin:8px 0 0}
+.chkline input{accent-color:var(--green);margin:0}
+.res{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 0;border-bottom:1px solid var(--line)}
+.res:last-child{border-bottom:0}
+.res b{font-weight:600}
+.res .sub{font-size:11.5px;color:var(--muted)}
+.res .btns{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.res button{padding:6px 10px;font-size:12px}
+.res .wide{grid-column:1/-1}
+.res a{color:var(--green);font-weight:600}
+@media (max-width:760px){.res{grid-template-columns:minmax(0,1fr)}.res .btns{justify-content:flex-start}}
+.totals{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:6px}
+.totals .v{font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}
+details.msg summary{cursor:pointer;font-size:11.5px;color:var(--muted)}
+details.msg pre{white-space:pre-wrap;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;background:var(--soft);padding:8px 10px;border-radius:8px;margin:6px 0 0;user-select:all}
+.toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));z-index:50;background:var(--ink);color:var(--card);padding:10px 12px 10px 14px;border-radius:12px;width:max-content;max-width:min(560px,calc(100vw - 32px));box-shadow:0 8px 24px rgba(0,0,0,.25);display:flex;gap:10px;align-items:center;font-size:13px}
+.toast span{flex:1;min-width:0}
+.toast button{background:transparent;color:inherit;border-color:currentColor;padding:4px 10px;font-size:12px;flex:none}
+.acct{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-bottom:12px;padding:8px 10px;background:var(--soft);border-radius:9px}
+.acct img{width:22px;height:22px;border-radius:50%}
+.sent{color:var(--green);font-weight:600;font-size:12px}
+.ship .two{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+td button{padding:4px 10px;font-size:12px}
+
+/* ---------- design pass: type, buttons, cards ---------- */
+body{font-size:13.5px;letter-spacing:-.003em}
+.head h1,.card h2,.kpi .v,.gauge .big,.totals .v,.stage .n,.leg .amt,.ship-h b,.slot b{font-family:var(--fd);letter-spacing:-.015em}
+.head h1{font-size:24px;font-weight:700}
+.card h2{font-size:15px;font-weight:600}
+.card{border-radius:16px;border-color:var(--line);box-shadow:0 1px 2px rgba(12,22,48,.04)}
+.frame{border-radius:24px;border-color:#DCE3EE}
+.main{padding:16px 22px 26px}
+button{border-radius:11px;transition:background-color .15s,border-color .15s,box-shadow .15s,transform .05s}
+button:hover:not(:disabled){border-color:var(--green-line)}
+button:active:not(:disabled){transform:translateY(1px)}
+button.primary{background:linear-gradient(180deg,#2C7DF2,#1462DA);border-color:#1462DA;box-shadow:0 1px 0 rgba(255,255,255,.25) inset,0 6px 16px rgba(23,104,229,.28)}
+button.primary:hover:not(:disabled){background:linear-gradient(180deg,#3887F5,#1768E5)}
+@media (prefers-reduced-motion:reduce){button{transition:none}}
+.rail{background:linear-gradient(180deg,#FFFFFF,#F6F8FC)}
+.ri.on{background:var(--green-soft);color:var(--green);box-shadow:inset 2px 0 0 var(--green)}
+.crumb .cur{font-weight:600}
+.status{background:var(--card)}
+.status i{background:var(--blue)}
+.status.live i{background:var(--ok)}
+.stage.good{background:#E8F7F0;border-color:#9CDABF}.stage.good .n{color:var(--ok)}
+.pill.g{background:var(--green-soft);border-color:var(--green-line);color:var(--green)}
+.ship{border-radius:14px;transition:box-shadow .15s,border-color .15s}
+.ship:hover{border-color:var(--green-line);box-shadow:0 8px 24px rgba(12,22,48,.08)}
+.scorebar i{background:linear-gradient(90deg,#1768E5,#4EA3FF)}
+.gauge svg circle#gArc{stroke:var(--green)}
+.leg .ix{border-radius:8px;font-family:var(--fd)}
+input[type=text],input[type=number],input[type=tel],select,textarea{border-radius:10px;background:#FBFCFE}
+input:focus,select:focus,textarea:focus{border-color:var(--green-line);box-shadow:0 0 0 3px rgba(23,104,229,.12);outline:none}
+.chk{border-radius:9px}
+.chk:has(input:checked){color:var(--green);font-weight:600}
+.chk input,.chkline input{accent-color:var(--green)}
+.sent{color:var(--ok)}
+
+/* ---------- hero: night-road panel using the logo truck ---------- */
+.hero{position:relative;border:0;border-radius:18px;padding:18px 18px 14px;color:#EEF3FF;
+  background:radial-gradient(90% 120% at 100% 100%,rgba(240,138,36,.38),transparent 55%),radial-gradient(70% 90% at 0% 0%,rgba(46,128,255,.28),transparent 60%),linear-gradient(140deg,#081128 0%,#0E1F47 58%,#16244A 100%);
+  box-shadow:0 18px 40px rgba(8,17,40,.25);
+  --card:rgba(255,255,255,.05);--ink:#EEF3FF;--muted:#A8B7D4;--faint:#8394B5;--line:rgba(255,255,255,.13);--soft:rgba(255,255,255,.08);
+  --hatch:rgba(255,255,255,.08);--green:#5AA9FF;--green-soft:rgba(90,169,255,.16);--green-line:rgba(90,169,255,.6);--blue:#FF9A3D;--steel:rgba(255,255,255,.25)}
+.hero .hint{color:var(--muted)}
+.rig{grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);align-items:center;gap:18px}
+.cab{display:flex;align-items:center}
+.truckimg{width:100%;aspect-ratio:790/250;background:url("scout-lane-logo.webp") no-repeat;background-size:198.48% auto;background-position:64.27% 17.2%;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 14%,#000 90%,transparent 100%),linear-gradient(180deg,#000 72%,transparent 100%);-webkit-mask-composite:source-in;
+  mask-image:linear-gradient(90deg,transparent 0,#000 14%,#000 90%,transparent 100%),linear-gradient(180deg,#000 72%,transparent 100%);mask-composite:intersect}
+.trailer{margin-bottom:0;border:1px solid rgba(255,255,255,.16);border-radius:14px;background:rgba(255,255,255,.035);min-height:180px}
+.trailer::after,.wheels{display:none}
+.slot{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.12);border-radius:10px}
+.slot.full{background:repeating-linear-gradient(135deg,rgba(255,255,255,.07) 0 7px,rgba(255,255,255,.015) 7px 14px);border-color:rgba(90,169,255,.55)}
+.slot.full.pin{border-color:#FF9A3D}
+.slot .dotg{background:#5AA9FF;box-shadow:0 0 8px #5AA9FF}
+.slot.pin .dotg{background:#FF9A3D;box-shadow:0 0 8px #FF9A3D}
+.kpis{margin-top:14px}
+.kpi .v.g{color:#7BE3AE}
+@media (max-width:760px){.cab{display:flex}.rig{grid-template-columns:minmax(0,1fr);gap:10px}.truckimg{max-width:420px;margin:0 auto}}
+
+/* ---------- whole app in the night-road style: navy glass, electric blue, sunset glow (single deliberate dark look) ---------- */
+:root{
+  --canvas:#060D20; --frame:rgba(9,18,42,.55); --card:rgba(255,255,255,.045); --ink:#EEF3FF; --muted:#A8B7D4; --faint:#7F90B2;
+  --line:rgba(255,255,255,.12); --soft:rgba(255,255,255,.07); --green:#5AA9FF; --green-ink:#FFFFFF; --green-soft:rgba(90,169,255,.16); --green-line:rgba(90,169,255,.55);
+  --blue:#FF9A3D; --blue-soft:rgba(255,154,61,.16); --amber:#FFB547; --amber-soft:rgba(255,181,71,.14); --red:#FF7B72; --red-soft:rgba(255,123,114,.12);
+  --ok:#7BE3AE; --hatch:rgba(255,255,255,.08); --steel:rgba(255,255,255,.25); --steel-dark:#C9D4EA; color-scheme:dark}
+body{color:var(--ink);background-color:#060D20;
+  background-image:radial-gradient(60% 50% at 100% 100%,rgba(240,138,36,.30),transparent 70%),radial-gradient(55% 45% at 0% 0%,rgba(46,128,255,.22),transparent 70%),linear-gradient(160deg,#060D20 0%,#0B1A3E 55%,#101C3C 100%);
+  background-attachment:fixed;min-height:100%}
+.frame{background:rgba(9,18,42,.72);border:1px solid rgba(255,255,255,.08);box-shadow:0 30px 80px rgba(0,0,0,.35)}
+.rail{background:rgba(255,255,255,.03);border-right-color:var(--line)}
+.card{background:linear-gradient(180deg,rgba(255,255,255,.065),rgba(255,255,255,.03));border-color:rgba(255,255,255,.10);box-shadow:0 10px 30px rgba(0,0,0,.22)}
+.hero{border:1px solid rgba(255,255,255,.10);box-shadow:0 20px 50px rgba(0,0,0,.35)}
+input[type=text],input[type=number],input[type=tel],select,textarea{background:rgba(255,255,255,.05);color:var(--ink);border-color:rgba(255,255,255,.14)}
+input::placeholder,textarea::placeholder{color:var(--faint)}
+input:focus,select:focus,textarea:focus{border-color:var(--green-line);box-shadow:0 0 0 3px rgba(90,169,255,.18)}
+option{background:#0E1F47;color:#EEF3FF}
+button{background:rgba(255,255,255,.06);color:var(--ink);border-color:rgba(255,255,255,.14)}
+button:hover:not(:disabled){background:rgba(255,255,255,.10);border-color:var(--green-line)}
+button.primary{color:#FFFFFF;background:linear-gradient(180deg,#3A8DFF,#1A66E0);border-color:#2A78F0;box-shadow:0 1px 0 rgba(255,255,255,.25) inset,0 8px 22px rgba(42,120,240,.35)}
+button.primary:hover:not(:disabled){background:linear-gradient(180deg,#4B98FF,#2272EA)}
+button.on{background:var(--green-soft);border-color:var(--green-line);color:var(--green)}
+.tb-icons span{background:rgba(255,255,255,.05);border-color:var(--line)}
+.ri.on{background:var(--green-soft);color:var(--green);box-shadow:inset 2px 0 0 var(--green)}
+.crumb .cur{background:var(--green-soft);color:var(--green)}
+.stage{background:rgba(255,255,255,.03)}
+.stage.good{background:rgba(123,227,174,.10);border-color:rgba(123,227,174,.40)}
+.stage.good .n{color:var(--ok)}
+th{background:#12234B;color:var(--muted)}
+th[aria-sort]{color:var(--ink)}
+tbody tr:hover{background:rgba(255,255,255,.04)}
+.ship{background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.025));border-color:rgba(255,255,255,.12)}
+.ship:hover{border-color:var(--green-line);box-shadow:0 10px 30px rgba(0,0,0,.3),0 0 0 1px rgba(90,169,255,.2)}
+.ship.pinned{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue)}
+.pill{border-color:rgba(255,255,255,.16);color:var(--muted)}
+.scorebar{background:rgba(255,255,255,.08)}
+.scorebar i{background:linear-gradient(90deg,#2A78F0,#7CC0FF)}
+.gauge svg circle#gArc{stroke:#5AA9FF;filter:drop-shadow(0 0 6px rgba(90,169,255,.6))}
+.log .e span.ic{background:#0F1E44}
+.track i{background:#EEF3FF;box-shadow:0 0 0 3px #0F1E44,0 0 10px rgba(90,169,255,.6)}
+.avatar{background:var(--green-soft);color:var(--green)}
+.leg .ix{background:var(--green-soft);color:var(--green)}
+svg.map{background:rgba(255,255,255,.04)}
+.toast{background:#EEF3FF;color:#0C1630;box-shadow:0 12px 32px rgba(0,0,0,.45)}
+.toast button{color:#0C1630;border-color:#0C1630;background:transparent}
+.pl{background:rgba(255,255,255,.03)}
+.pl.bad{border-color:rgba(255,123,114,.55)}
+.acct{background:rgba(255,255,255,.05)}
+.chk{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.14)}
+.chk:has(input:checked){background:var(--green-soft);border-color:var(--green-line);color:var(--ink)}
+.head h1{text-shadow:0 2px 18px rgba(46,128,255,.25)}
+.mapwrap{min-width:0}
+.routegrid{grid-template-columns:minmax(0,.9fr) minmax(0,1.15fr)}
+@media (max-width:1150px){.routegrid{grid-template-columns:minmax(0,1fr)}}
+svg.map{display:block;width:100%;height:auto;border-radius:14px;border:1px solid rgba(90,169,255,.18);background:#091430;box-shadow:inset 0 0 40px rgba(0,0,0,.35)}
+.brandlogo,.rail .logo{box-shadow:0 0 0 1px rgba(255,255,255,.08),0 6px 18px rgba(0,0,0,.35)}
+</style>
+
+<div class="page">
+<div class="frame">
+  <nav class="rail" aria-label="Sections">
+    <div class="logo" role="img" aria-label="Scout Lane"></div>
+    <span class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
+    <span class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11 12 4l9 7v9h-6v-6H9v6H3z"/></svg></span>
+    <span class="ri on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 6h12v10H2zM14 9h4l4 4v3h-8z"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg></span>
+    <span class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h7a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h7"/></svg></span>
+    <span class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></span>
+    <span class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/></svg></span>
+    <span class="grow"></span>
+    <span class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.6 1.6 0 0 0 3.3 14H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg></span>
+  </nav>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="left"><div class="brandlogo" role="img" aria-label="Scout Lane load matching"></div><div class="crumb"><span>Dispatch</span><span>/</span><span class="cur">Load matching</span></div></div>
+      <div class="tb-icons"><span title="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21h4"/></svg></span><span title="Profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span></div>
+    </div>
+
+    <div class="head">
+      <h1><span id="truckTitle">TRK-204 load matching</span> <span class="status" id="status"><i></i><span>Idle</span></span></h1>
+      <div class="actions">
+        <button id="autoBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg><span>Auto-scan off</span></button>
+        <button class="primary" id="scanBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Scan load boards</button>
+      </div>
+    </div>
+
+    <div class="layout">
+      <!-- left column -->
+      <div class="col">
+        <section class="card">
+          <h2>Truck information</h2>
+          <div class="driver"><div class="avatar" id="drvInit">?</div><div class="who"><span class="lbl" style="margin:0">Driver</span><b id="drvName">Add your name below</b></div></div>
+          <div class="g3">
+            <div><span class="lbl">Truck tag</span><span class="val" id="tagVal">—</span></div>
+            <div><span class="lbl">Cargo</span><span class="val" id="trailerVal">53 ft</span></div>
+            <div><span class="lbl">Max load</span><span class="val" id="wtVal">44,000 lb</span></div>
+          </div>
+          <div class="lane"><div><b id="laneFrom">NC</b><small id="laneFromC">Charlotte</small></div><div class="track"><i></i></div><div style="text-align:right"><b id="laneTo">—</b><small id="laneToC">Next drop</small></div></div>
+          <div class="f"><span class="lbl">Equipment</span><div class="chips" id="equipChips"></div></div>
+          <div class="g2">
+            <div class="f"><label for="trailerLen">Cargo length</label><select id="trailerLen"><option value="53" selected>53 ft</option><option value="48">48 ft</option><option value="26">26 ft</option><option value="24">24 ft</option><option value="22">22 ft</option><option value="20">20 ft</option><option value="16">16 ft</option></select></div>
+            <div class="f"><label for="maxWt">Max weight (lb)</label><input id="maxWt" type="number" step="500" value="44000"></div>
+          </div>
+          <div class="f"><label for="loc">Current location</label><select id="loc"></select></div>
+        </section>
+
+        <section class="card">
+          <h2>Driver profile</h2>
+          <div class="acct" id="acct">Checking sign-in…</div>
+          <div class="f"><label for="pName">Name</label><input id="pName" type="text" autocomplete="name"></div>
+          <div class="g2">
+            <div class="f"><label for="pDot">USDOT number</label><input id="pDot" type="text" inputmode="numeric"></div>
+            <div class="f"><label for="pMc">MC number</label><input id="pMc" type="text" inputmode="numeric"></div>
+            <div class="f"><label for="pTag">Truck tag</label><input id="pTag" type="text"></div>
+            <div class="f"><label for="pPhone">Phone</label><input id="pPhone" type="tel" autocomplete="tel"></div>
+          </div>
+          <p class="hint" id="pState" style="margin:0 0 10px"></p>
+          <div class="actions"><button class="primary" id="pSave" type="button">Save profile</button><button id="pClear" type="button">Clear</button></div>
+          <p class="hint" style="margin:10px 0 0">Sign-in is your claude.ai account, so there is no separate password to reset here. Name, USDOT, MC and truck tag go into every carrier message when you reserve.</p>
+        </section>
+
+        <section class="card">
+          <h2>Scan yield</h2>
+          <div class="gauge">
+            <svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="48" fill="none" stroke="var(--soft)" stroke-width="10"/><circle id="gArc" cx="60" cy="60" r="48" fill="none" stroke="var(--blue)" stroke-width="10" stroke-linecap="round" stroke-dasharray="0 302" transform="rotate(-90 60 60)"/><text id="gPct" x="60" y="60" text-anchor="middle" font-size="20" font-weight="600" fill="var(--ink)" font-family="Inter, sans-serif">0%</text><text x="60" y="78" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="Inter, sans-serif">valid</text></svg>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div><span class="lbl" style="margin:0">Valid loads</span><div class="big" id="gValid">0</div></div>
+              <div><span class="lbl" style="margin:0">Postings scanned</span><div class="big" id="gRaw">0</div></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Preferences</h2>
+          <div class="f"><label for="lanes">Preferred lanes</label><input id="lanes" type="text" value="NC>GA, *>NC, TN>*"><span class="hint">State or city, comma separated. * means any.</span></div>
+          <div class="g2">
+            <div class="f"><label for="minRpm">Min $/mile</label><input id="minRpm" type="number" step="0.05" value="2.00"></div>
+            <div class="f"><label for="maxDh">Max deadhead (mi)</label><input id="maxDh" type="number" step="10" value="150"></div>
+            <div class="f"><label for="minMiles">Min miles</label><input id="minMiles" type="number" step="25" value="200"></div>
+            <div class="f"><label for="window">Pickup within (h)</label><input id="window" type="number" step="6" value="48"></div>
+          </div>
+          <hr class="sep">
+          <div class="g2">
+            <div class="f"><label for="mpg">Fuel mpg</label><input id="mpg" type="number" step="0.1" value="6.5"></div>
+            <div class="f"><label for="diesel">Diesel $/gal</label><input id="diesel" type="number" step="0.05" value="3.75"></div>
+            <div class="f"><label for="speed">Avg speed (mph)</label><input id="speed" type="number" step="1" value="50"></div>
+            <div class="f"><label for="dock">Load/unload (h)</label><input id="dock" type="number" step="0.5" value="1.5"></div>
+            <div class="f"><label for="horizon">Route within (days)</label><input id="horizon" type="number" step="1" min="1" value="5"></div>
+          </div>
+          <span class="hint">Hours of service: 11 h driving, 14 h duty window, 30‑min break after 8 h, 10 h reset.</span>
+        </section>
+
+        <section class="card">
+          <h2>My carriers</h2>
+          <div class="inrow"><input id="carrierIn" type="text" placeholder="Carrier or broker name" aria-label="Carrier or broker name"><button id="carrierAdd" type="button">Add</button></div>
+          <div class="chips" id="carrierChips" style="margin-top:10px"></div>
+          <label class="chkline"><input type="checkbox" id="onlyMine"> Only show loads from my carriers</label>
+        </section>
+
+        <section class="card">
+          <h2>Phone alerts</h2>
+          <div class="f"><label for="alertMin">Minimum match score</label><input id="alertMin" type="number" step="1" value="75"></div>
+          <label class="chkline"><input type="checkbox" id="alertVib" checked> Vibrate</label>
+          <label class="chkline"><input type="checkbox" id="alertBeep" checked> Beep</label>
+          <div class="actions" style="margin-top:12px"><button id="alertBtn" class="primary" type="button">Turn on alerts</button></div>
+          <p class="hint" id="alertState" style="margin:10px 0 0">Alerts are off.</p>
+          <p class="hint" style="margin:6px 0 0">Alerts work only while this page is open. A locked phone needs a server that watches the boards and sends push messages.</p>
+        </section>
+
+        <section class="card">
+          <h2>Scan activity log</h2>
+          <div class="log" id="log"></div>
+        </section>
+      </div>
+
+      <!-- right column -->
+      <div class="col">
+        <section class="hero" aria-label="Route build">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+            <b style="font-size:14px">Load build</b><span class="hint" id="heroHint">Up to 4 loads chained from your location</span>
+          </div>
+          <div class="rig">
+            <div class="cab" aria-hidden="true"><div class="truckimg"></div></div>
+            <div>
+              <div class="trailer" id="trailer"></div>
+              <div class="wheels" aria-hidden="true"><span class="w" style="right:18%"></span><span class="w" style="right:calc(18% + 50px)"></span><span class="w" style="right:calc(18% + 100px)"></span></div>
+            </div>
+          </div>
+          <div class="kpis" id="kpis"></div>
+        </section>
+
+        <section class="card">
+          <h2><span>Route plan <small id="routeSub"></small></span><button id="reserveAll" type="button" class="primary" disabled>Reserve all</button></h2>
+          <div id="route"><div class="empty">Run a scan to build a route.</div></div>
+        </section>
+
+        <section class="card" id="matchesCard">
+          <h2><span>Best matches <small id="matchMeta"></small></span>
+            <span class="tools">
+              <span class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="text" placeholder="Search city, state or broker" aria-label="Search loads"></span>
+              <select id="sortSel" aria-label="Sort by"><option value="score">Sort by score</option><option value="net">Net $/mi</option><option value="rate">Rate</option><option value="dh">Deadhead</option><option value="pu">Pickup time</option><option value="miles">Miles</option></select>
+              <span class="seg"><button type="button" id="vGrid" class="sel">Grid</button><button type="button" id="vTable">Table</button></span>
+            </span>
+          </h2>
+          <div id="cardsView" class="cards"></div>
+          <div id="tableView" class="tbl" hidden><table id="tbl">
+            <thead><tr>
+              <th data-k="score" class="num" tabindex="0">Score</th><th data-k="lane" tabindex="0">Lane</th><th data-k="equip" tabindex="0">Eq</th><th data-k="pu" tabindex="0">Pickup</th>
+              <th data-k="miles" class="num" tabindex="0">Miles</th><th data-k="dh" class="num" tabindex="0">DH</th><th data-k="rate" class="num" tabindex="0">Rate</th>
+              <th data-k="rpm" class="num" tabindex="0">$/mi</th><th data-k="net" class="num" tabindex="0">Net $/mi</th><th data-k="wt" class="num" tabindex="0">Weight</th>
+              <th data-k="len" class="num" tabindex="0">Len</th><th data-k="source" tabindex="0">Source</th><th data-k="broker" tabindex="0">Broker</th><th>Action</th>
+            </tr></thead><tbody id="tbody"></tbody></table></div>
+          <p class="hint" style="margin:8px 0 0">Score = net $/mi × 30 + preferred lane 12 + deadhead up to 6 + trailer fill up to 3. Net $/mi includes deadhead. “Add to route” makes that load the first stop of the build. “Reserve” moves it to Upcoming.</p>
+        </section>
+
+        <section class="card">
+          <h2>Upcoming <small id="upMeta"></small></h2>
+          <div id="upList"></div>
+        </section>
+
+        <section class="card">
+          <h2>Completed <small id="doneMeta"></small></h2>
+          <div class="totals" id="doneTotals"></div>
+          <div id="doneList"></div>
+        </section>
+
+        <section class="card">
+          <h2>Scan results <small id="scanTime">Not scanned yet</small></h2>
+          <div class="funnel" id="funnel"></div>
+          <p class="hint" style="margin:8px 0 0" id="poolMeta"></p>
+        </section>
+
+        <section class="card">
+          <h2>Messy postings <small>rule-based parser, no AI</small></h2>
+          <div class="split">
+            <div>
+              <div class="f"><label for="raw">Paste postings, one per line</label>
+<textarea id="raw">CLT NC -> ATL GA  53' V  42k  $1,150  PU 11/14 0800  Blue Ridge Freight
+reefer!! Nashville,TN to Orlando FL, 2.65/mi, 38,500 lbs, pick tmrw am
+FB 48ft  Memphis TN > Dallas TX  rate 1450  tarps req
+Greensboro NC - Columbus OH  dry van 53  $1900 40000# PU today pm
+step deck Charlotte NC to  $2,300 PU 11/15
+Box truck 26' Atlanta GA to Nashville TN 8,500 lbs $950 PU tmrw pm</textarea></div>
+              <div class="actions"><button id="parseBtn" type="button">Parse postings</button><button id="addParsed" class="primary" type="button" disabled>Add valid to pool</button></div>
+            </div>
+            <div><span class="lbl">Parsed</span><div class="parsed" id="parsed"></div></div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+<p class="foot">Scout Lane runs on generated data from five fictional boards. Rates, brokers, the driver and loads are not real. It does not connect to any load board, and distances are straight-line estimates × 1.18, not road routing.</p>
+</div>
+
+<script>
+(()=>{
+const H=3600000;
+const CITIES=[["Charlotte","NC",35.23,-80.84,3],["Raleigh","NC",35.78,-78.64,2],["Greensboro","NC",36.07,-79.79,2],["Atlanta","GA",33.75,-84.39,4],["Savannah","GA",32.08,-81.09,2],["Nashville","TN",36.16,-86.78,3],["Memphis","TN",35.15,-90.05,3],["Knoxville","TN",35.96,-83.92,2],["Chattanooga","TN",35.05,-85.31,2],["Columbia","SC",34.0,-81.03,1],["Charleston","SC",32.78,-79.93,2],["Jacksonville","FL",30.33,-81.66,2],["Orlando","FL",28.54,-81.38,2],["Miami","FL",25.76,-80.19,2],["Tampa","FL",27.95,-82.46,2],["Birmingham","AL",33.52,-86.80,2],["Richmond","VA",37.54,-77.44,2],["Norfolk","VA",36.85,-76.29,1],["Baltimore","MD",39.29,-76.61,2],["Philadelphia","PA",39.95,-75.17,2],["Harrisburg","PA",40.27,-76.88,2],["Pittsburgh","PA",40.44,-79.99,1],["Newark","NJ",40.74,-74.17,2],["Albany","NY",42.65,-73.75,1],["Boston","MA",42.36,-71.06,1],["Columbus","OH",39.96,-83.0,3],["Cincinnati","OH",39.10,-84.51,2],["Indianapolis","IN",39.77,-86.16,3],["Louisville","KY",38.25,-85.76,2],["Chicago","IL",41.88,-87.63,4],["Detroit","MI",42.33,-83.05,2],["St. Louis","MO",38.63,-90.2,2],["Kansas City","MO",39.1,-94.58,2],["Minneapolis","MN",44.98,-93.27,2],["Omaha","NE",41.26,-95.93,1],["Dallas","TX",32.78,-96.8,4],["Houston","TX",29.76,-95.37,3],["San Antonio","TX",29.42,-98.49,2],["Laredo","TX",27.53,-99.48,2],["Oklahoma City","OK",35.47,-97.52,1],["Little Rock","AR",34.75,-92.29,1],["New Orleans","LA",29.95,-90.07,1],["Jackson","MS",32.3,-90.18,1],["Denver","CO",39.74,-104.99,2],["Phoenix","AZ",33.45,-112.07,2],["Salt Lake City","UT",40.76,-111.89,1],["Los Angeles","CA",34.05,-118.24,3],["Fresno","CA",36.74,-119.79,1],["Portland","OR",45.52,-122.68,1],["Seattle","WA",47.61,-122.33,1]];
+const C=CITIES.map(([n,s,lat,lon,w],i)=>({i,n,s,lat,lon,w,label:n+", "+s}));
+function hav(a,b){const r=Math.PI/180,dl=(b.lat-a.lat)*r,dn=(b.lon-a.lon)*r;const x=Math.sin(dl/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dn/2)**2;return 2*3958.8*Math.asin(Math.sqrt(x));}
+const D=C.map(a=>C.map(b=>a===b?0:Math.round(hav(a,b)*1.18)));
+const EQ={V:{name:"Dry van",base:2.10,share:.38},R:{name:"Reefer",base:2.45,share:.19},F:{name:"Flatbed",base:2.70,share:.14},SD:{name:"Step deck",base:2.90,share:.06},PO:{name:"Power only",base:1.80,share:.09},BT:{name:"Box truck",base:2.30,share:.08},CV:{name:"Cargo van",base:2.05,share:.06}};
+const SOURCES=["Northstar Board","Crossdock Exchange","Mile Market","Lanewire","Broker Direct"];
+const BROKERS=["Piedmont Logistics","Blue Ridge Freight","Gulf Coast Brokerage","Midland Transport","Summit Freight Partners","Harbor Point Logistics","Prairie Line Brokerage","Keystone Cargo","Tidewater Shipping Co.","Ozark Freight Desk"];
+const $=id=>document.getElementById(id);
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const wsum=C.reduce((s,c)=>s+c.w,0);
+function pickCity(){let r=Math.random()*wsum;for(const c of C){r-=c.w;if(r<=0)return c;}return C[0];}
+function pickEquip(){let r=Math.random();for(const k in EQ){r-=EQ[k].share;if(r<=0)return k;}return "V";}
+
+let seq=1,tick=0,pinned=null,view="grid";
+let mine=[],reservations=[],reservedSet=new Set();
+const pool=new Map();
+const stats={raw:0,missing:0,zero:0,badRate:0,past:0,dup:0,valid:0};
+let lastScan=null,autoTimer=null,sortKey="score",sortDir=-1,parsedBuf=[];
+const logs=[];
+function log(text,kind){logs.unshift({t:Date.now(),text,kind});if(logs.length>40)logs.pop();}
+
+/* controls */
+for(const k in EQ){const l=document.createElement("label");l.className="chk";l.innerHTML=`<input type="checkbox" id="eq_${k}" value="${k}" ${k==="V"||k==="R"?"checked":""}> ${EQ[k].name}`;$("equipChips").appendChild(l);}
+[...C].sort((a,b)=>a.label.localeCompare(b.label)).forEach(c=>{const o=document.createElement("option");o.value=c.i;o.textContent=c.label;if(c.n==="Charlotte")o.selected=true;$("loc").appendChild(o);});
+const PREF_IDS=["trailerLen","maxWt","loc","lanes","minRpm","maxDh","minMiles","window","mpg","diesel","speed","dock","horizon","alertMin"];
+const CHK_IDS=["onlyMine","alertVib","alertBeep"];
+try{const s=JSON.parse(localStorage.getItem("lanescout-prefs")||"null");if(s){PREF_IDS.forEach(id=>{if(s[id]!=null)$(id).value=s[id];});CHK_IDS.forEach(id=>{if(s[id]!=null)$(id).checked=s[id];});if(s.equip)for(const k in EQ)$("eq_"+k).checked=s.equip.includes(k);if(s.view)view=s.view;}}catch(e){}
+function savePrefs(){try{const s={view};PREF_IDS.forEach(id=>s[id]=$(id).value);CHK_IDS.forEach(id=>s[id]=$(id).checked);s.equip=Object.keys(EQ).filter(k=>$("eq_"+k).checked);localStorage.setItem("lanescout-prefs",JSON.stringify(s));}catch(e){}}
+function num(id,d){const v=parseFloat($(id).value);return isFinite(v)?v:d;}
+function settings(){return{equip:new Set(Object.keys(EQ).filter(k=>$("eq_"+k).checked)),len:num("trailerLen",53),maxWt:num("maxWt",44000),loc:+$("loc").value,lanes:parseLanes($("lanes").value),minRpm:num("minRpm",0),maxDh:num("maxDh",150),minMiles:num("minMiles",0),window:num("window",48),mpg:Math.max(1,num("mpg",6.5)),diesel:num("diesel",3.75),speed:Math.max(20,num("speed",50)),dock:Math.max(0,num("dock",1.5)),horizon:Math.max(1,num("horizon",5)),onlyMine:$("onlyMine").checked,mineSet:new Set(mine.map(m=>m.toLowerCase()))};}
+function parseLanes(t){return t.split(",").map(s=>s.trim().toUpperCase()).filter(s=>s.includes(">")).map(s=>{const[o,d]=s.split(">").map(x=>x.trim());return{o:o||"*",d:d||"*"};});}
+function sideMatch(r,c){return r==="*"||r===c.s||r===c.n.toUpperCase();}
+function laneMatch(L,lanes){return lanes.some(r=>sideMatch(r.o,C[L.o])&&sideMatch(r.d,C[L.d]));}
+
+/* simulated postings */
+function makeLoad(now){
+  const o=pickCity();let d;do{d=pickCity();}while(d===o);
+  const equip=pickEquip(),miles=D[o.i][d.i];
+  const rpm=EQ[equip].base*(1+250/(miles+150))*0.75*rnd(.85,1.2);
+  const rate=Math.max(350,Math.round(rpm*miles/5)*5);
+  const pu=Math.round((now+rnd(-8,96)*H)/(H/2))*(H/2);
+  const lr=Math.random();let len,wt;
+  if(equip==="BT"){len=Math.round(rnd(16,26));wt=Math.round(rnd(1500,10000)/100)*100;}
+  else if(equip==="CV"){len=Math.round(rnd(10,16));wt=Math.round(rnd(300,3500)/50)*50;}
+  else{len=equip==="PO"?53:lr<.6?53:lr<.85?48:Math.round(rnd(20,40));wt=Math.round(rnd(8000,46000)/100)*100;}
+  const broker=mine.length&&Math.random()<.18?pick(mine):pick(BROKERS);
+  return{id:"LD-"+(1000+seq++),source:pick(SOURCES),broker,o:o.i,d:d.i,equip,miles,rate,puStart:pu,puEnd:pu+4*H,len,wt,posted:now,born:tick,updated:-1,also:[]};
+}
+function genRaw(n,now){
+  const out=[];
+  for(let k=0;k<n;k++){
+    const L=makeLoad(now),r=Math.random();
+    if(r<.03){L[pick(["rate","d","equip","puStart"])]=null;}
+    else if(r<.05)L.miles=0;
+    else if(r<.07)L.rate=Math.random()<.5?Math.round(L.rate*rnd(8,20)):Math.round(rnd(1,60));
+    out.push(L);
+    if(Math.random()<.12)out.push({...L,id:"LD-"+(1000+seq++),source:pick(SOURCES.filter(s=>s!==L.source)),also:[]});
+  }
+  return out;
+}
+function keyOf(L){return[L.broker,L.o,L.d,L.equip,Math.round(L.puStart/H)].join("|");}
+function rejectReason(L,now){
+  if(L.o==null||L.d==null||!L.equip||L.rate==null||L.puStart==null||!L.broker)return"missing";
+  if(!L.miles||L.miles<=0)return"zero";
+  const rpm=L.rate/L.miles;if(L.rate<=0||rpm<0.6||rpm>12)return"badRate";
+  if(L.puEnd<now)return"past";
+  return null;
+}
+function ingest(raws,now){
+  let added=0;
+  for(const L of raws){
+    stats.raw++;const why=rejectReason(L,now);
+    if(why){stats[why]++;continue;}
+    const k=keyOf(L);
+    if(pool.has(k)){stats.dup++;const ex=pool.get(k);if(ex.source!==L.source&&!ex.also.includes(L.source))ex.also.push(L.source);continue;}
+    stats.valid++;L.key=k;pool.set(k,L);added++;
+  }
+  return added;
+}
+function fullScan(){
+  const now=Date.now();pool.clear();for(const k in stats)stats[k]=0;tick=0;pinned=null;
+  ingest(genRaw(2700,now),now);lastScan=now;
+  log(`Scanned ${stats.raw.toLocaleString()} postings from ${SOURCES.length} boards`,"scan");
+  log(`Rejected ${(stats.missing+stats.zero+stats.badRate+stats.past).toLocaleString()} bad postings, removed ${stats.dup.toLocaleString()} duplicates`,"warn");
+  render();
+}
+function autoTick(){
+  const now=Date.now();tick++;let exp=0;
+  for(const[k,L]of pool)if(L.puEnd<now){pool.delete(k);exp++;}
+  const added=ingest(genRaw(Math.round(rnd(40,80)),now),now);
+  const vals=[...pool.values()];
+  for(let j=0;j<12&&vals.length;j++){const L=pick(vals);L.rate=Math.max(350,Math.round(L.rate*rnd(.95,1.07)/5)*5);L.updated=tick;}
+  lastScan=now;log(`Auto-scan added ${added} loads, updated 12 rates${exp?`, ${exp} expired`:""}`,"auto");
+  render();
+}
+$("scanBtn").onclick=fullScan;
+$("autoBtn").onclick=()=>{
+  const b=$("autoBtn");
+  if(autoTimer){clearInterval(autoTimer);autoTimer=null;b.classList.remove("on");b.querySelector("span").textContent="Auto-scan off";log("Auto-scan stopped","auto");}
+  else{if(!pool.size)fullScan();autoTimer=setInterval(autoTick,5000);b.classList.add("on");b.querySelector("span").textContent="Auto-scan every 5 s";log("Auto-scan started, every 5 seconds","auto");}
+  render();
+};
+
+/* matching */
+function eligible(L,S){return !reservedSet.has(L.id)&&(!S.onlyMine||S.mineSet.has(L.broker.toLowerCase()))&&S.equip.has(L.equip)&&L.len<=S.len&&L.wt<=S.maxWt&&L.miles>=S.minMiles&&L.rate/L.miles>=S.minRpm;}
+function matches(S,now){
+  const out=[];
+  for(const L of pool.values()){
+    if(!eligible(L,S))continue;
+    const dh=D[S.loc][L.o];if(dh>S.maxDh)continue;
+    if(L.puStart>now+S.window*H)continue;
+    if(now+dh/S.speed*H>L.puEnd)continue;
+    const net=L.rate/(L.miles+dh),lane=laneMatch(L,S.lanes);
+    out.push({L,dh,net,lane,rpm:L.rate/L.miles,score:net*30+(lane?12:0)+6*(1-dh/Math.max(S.maxDh,1))+3*(L.len/S.len)});
+  }
+  return out;
+}
+function sortVal(m,k){switch(k){case"lane":return C[m.L.o].label+C[m.L.d].label;case"equip":return m.L.equip;case"pu":return m.L.puStart;case"miles":return m.L.miles;case"rate":return m.L.rate;case"wt":return m.L.wt;case"len":return m.L.len;case"source":return m.L.source;case"broker":return m.L.broker;default:return m[k];}}
+const ASC=["lane","equip","pu","source","broker","dh"];
+document.querySelectorAll("#tbl th[data-k]").forEach(th=>{
+  const go=()=>{const k=th.dataset.k;if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=ASC.includes(k)?1:-1;}syncSortSel();render();};
+  th.onclick=go;th.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go();}};
+});
+function syncSortSel(){const o=[...$("sortSel").options].find(o=>o.value===sortKey);$("sortSel").value=o?sortKey:"score";}
+$("sortSel").onchange=e=>{sortKey=e.target.value;sortDir=ASC.includes(sortKey)?1:-1;render();};
+$("q").oninput=()=>render();
+function setView(v){view=v;$("vGrid").classList.toggle("sel",v==="grid");$("vTable").classList.toggle("sel",v==="table");$("cardsView").hidden=v!=="grid";$("tableView").hidden=v!=="table";savePrefs();}
+$("vGrid").onclick=()=>setView("grid");$("vTable").onclick=()=>setView("table");
+
+/* hours of service */
+function newState(t){return{t,drive:0,since:0,win:t,breaks:0,resets:0};}
+function reset(s){s.t+=10;s.drive=0;s.since=0;s.win=s.t;s.resets++;}
+function drive(s,h){let rem=h;while(rem>1e-6){const can=Math.min(rem,11-s.drive,s.win+14-s.t,8-s.since);if(can<=1e-6){if(11-s.drive<=1e-6||s.win+14-s.t<=1e-6)reset(s);else{s.t+=.5;s.since=0;s.breaks++;}continue;}s.t+=can;s.drive+=can;s.since+=can;rem-=can;}}
+function duty(s,h){if(s.t+h>s.win+14)reset(s);s.t+=h;if(h>=.5)s.since=0;}
+function waitUntil(s,t){const w=t-s.t;if(w<=0)return;if(w>=10){s.t=t;s.drive=0;s.since=0;s.win=t;s.resets++;}else s.t=t;}
+function legSim(s,L,dh,S,base,force){
+  const n={...s};drive(n,dh/S.speed);const arrive=n.t;
+  const ps=(L.puStart-base)/H,pe=(L.puEnd-base)/H;
+  if(!force&&(n.t>pe||ps-n.t>36))return null;
+  waitUntil(n,ps);const pickup=n.t;duty(n,S.dock);drive(n,L.miles/S.speed);const deliverArr=n.t;duty(n,S.dock);
+  return{s:n,arrive,pickup,deliverArr,done:n.t,late:arrive>pe};
+}
+function fuel(mi,S){return mi/S.mpg*S.diesel;}
+function buildRoute(S,now){
+  const byOrigin=new Map();
+  for(const L of pool.values()){if(!eligible(L,S))continue;if(!byOrigin.has(L.o))byOrigin.set(L.o,[]);byOrigin.get(L.o).push(L);}
+  let best=null;
+  function dfs(loc,s,legs,rev,loaded,empty,used){
+    if(legs.length){const net=rev-fuel(loaded+empty,S);if(!best||net>best.net)best={legs:[...legs],net};}
+    if(legs.length===4)return;
+    const opts=[];
+    for(const[o,list]of byOrigin){
+      const dh=D[loc][o];if(dh>S.maxDh)continue;
+      for(const L of list){
+        if(used.has(L.id))continue;
+        if(!legs.length&&L.puStart>now+S.window*H)continue;
+        const r=legSim(s,L,dh,S,now);if(!r||r.done>S.horizon*24)continue;
+        opts.push({L,dh,r,v:(L.rate-fuel(L.miles+dh,S))/Math.max(1,r.done-s.t)});
+      }
+    }
+    opts.sort((a,b)=>b.v-a.v);
+    for(const op of opts.slice(0,5)){used.add(op.L.id);legs.push({L:op.L,dh:op.dh,from:loc});dfs(op.L.d,op.r.s,legs,rev+op.L.rate,loaded+op.L.miles,empty+op.dh,used);legs.pop();used.delete(op.L.id);}
+  }
+  const pin=pinned&&[...pool.values()].find(L=>L.id===pinned);
+  if(pin){
+    const dh=D[S.loc][pin.o],r=legSim(newState(0),pin,dh,S,now,true);
+    dfs(pin.d,r.s,[{L:pin,dh,from:S.loc}],pin.rate,pin.miles,dh,new Set([pin.id]));
+    if(!best)best={legs:[{L:pin,dh,from:S.loc}]};
+  }else dfs(S.loc,newState(0),[],0,0,0,new Set());
+  if(!best)return null;
+  let s=newState(0);const steps=[];let rev=0,loaded=0,empty=0;
+  best.legs.forEach((lg,k)=>{const b0=s.breaks,r0=s.resets;const r=legSim(s,lg.L,lg.dh,S,now,true);steps.push({...lg,...r,breaks:r.s.breaks-b0,resets:r.s.resets-r0});s=r.s;rev+=lg.L.rate;loaded+=lg.L.miles;empty+=lg.dh;});
+  const total=loaded+empty,fc=fuel(total,S);
+  return{steps,rev,loaded,empty,total,fc,net:rev-fc,end:s.t,breaks:s.breaks,resets:s.resets};
+}
+
+/* render helpers */
+const fmt$=v=>"$"+Math.round(v).toLocaleString("en-US");
+const fmtN=v=>Math.round(v).toLocaleString("en-US");
+const fmtT=ms=>{const d=new Date(ms);return d.toLocaleDateString("en-US",{weekday:"short"})+" "+d.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});};
+const fmtClock=ms=>new Date(ms).toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"});
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const ICO={scan:'<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/>',warn:'<path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/>',auto:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',add:'<path d="M12 5v14M5 12h14"/>',route:'<circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h7a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h7"/>'};
+
+function renderSide(S){
+  $("trailerVal").textContent=S.len+" ft";$("wtVal").textContent=fmtN(S.maxWt)+" lb";
+  $("laneFrom").textContent=C[S.loc].s;$("laneFromC").textContent=C[S.loc].n;
+  const pct=stats.raw?stats.valid/stats.raw:0,circ=2*Math.PI*48;
+  $("gArc").setAttribute("stroke-dasharray",`${(pct*circ).toFixed(1)} ${circ.toFixed(1)}`);
+  $("gPct").textContent=Math.round(pct*100)+"%";$("gValid").innerHTML=fmtN(stats.valid)+"<small>loads</small>";$("gRaw").innerHTML=fmtN(stats.raw)+"<small>postings</small>";
+  $("log").innerHTML=logs.length?logs.map(e=>`<div class="e"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${ICO[e.kind]||ICO.scan}</svg></span><div><time>${fmtClock(e.t)}</time><p>${esc(e.text)}</p></div></div>`).join(""):'<div class="hint">Scan events appear here.</div>';
+  const st=$("status");st.classList.toggle("live",!!autoTimer);st.querySelector("span").textContent=autoTimer?"Auto-scanning":pool.size?"Ready":"Idle";
+  const funnel=[["Postings scanned",stats.raw,""],["Missing fields",stats.missing,"rej"],["Zero miles",stats.zero,"rej"],["Impossible rate",stats.badRate,"rej"],["Past pickup",stats.past,"rej"],["Duplicates",stats.dup,"rej"],["Valid loads",stats.valid,"good"]];
+  $("funnel").innerHTML=funnel.map(([t,n,c])=>`<div class="stage ${c}"><div class="n">${fmtN(n)}</div><div class="t">${t}</div></div>`).join("");
+  $("poolMeta").textContent=`${fmtN(pool.size)} loads active in the pool. Loads drop out when their pickup window passes.`;
+  $("scanTime").textContent=lastScan?"Last scan "+new Date(lastScan).toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit",second:"2-digit"}):"Not scanned yet";
+}
+function render(){
+  savePrefs();const S=settings(),now=lastScan||Date.now();
+  renderSide(S);renderProfileView();renderRes(S);
+  if(!pool.size){$("cardsView").innerHTML='<div class="empty">Press “Scan load boards” to pull simulated postings.</div>';$("tbody").innerHTML="";$("matchMeta").textContent="";renderRoute(S,now);return;}
+  let M=matches(S,now);const total=M.length;checkAlerts(M);
+  const q=$("q").value.trim().toLowerCase();
+  if(q)M=M.filter(m=>(C[m.L.o].label+" "+C[m.L.d].label+" "+m.L.broker+" "+m.L.id+" "+EQ[m.L.equip].name).toLowerCase().includes(q));
+  M.sort((a,b)=>{const x=sortVal(a,sortKey),y=sortVal(b,sortKey);return(x<y?-1:x>y?1:0)*sortDir;});
+  const maxScore=M.reduce((m,x)=>Math.max(m,x.score),1);
+  $("matchMeta").textContent=`${fmtN(total)} of ${fmtN(pool.size)} pass your filters${q?` · ${M.length} match “${$("q").value.trim()}”`:""}`;
+  document.querySelectorAll("#tbl th").forEach(th=>{if(th.dataset.k===sortKey)th.setAttribute("aria-sort",sortDir>0?"ascending":"descending");else th.removeAttribute("aria-sort");});
+  const empty='<div class="empty">No loads pass these filters. Try a lower minimum $/mile, a longer deadhead or more equipment types.</div>';
+  $("cardsView").innerHTML=M.length?M.slice(0,60).map(m=>{const L=m.L;
+    const pill=L.id===pinned?'<span class="pill b">In route</span>':L.born===tick&&tick>0?'<span class="pill b">New</span>':L.updated===tick?'<span class="pill a">Rate updated</span>':m.lane?'<span class="pill g">★ Preferred</span>':'<span class="pill">Standard</span>';
+    return`<article class="ship${L.id===pinned?" pinned":""}">
+      <div class="ship-h"><svg class="bx" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg><b>${L.id}</b>${pill}</div>
+      <dl class="kv">
+        <div><dt>Route</dt><dd>${C[L.o].s} → ${C[L.d].s}</dd></div><div><dt>Type</dt><dd>${EQ[L.equip].name}</dd></div><div><dt>Rate</dt><dd>${fmt$(L.rate)}</dd></div>
+        <div><dt>Miles</dt><dd>${fmtN(L.miles)} mi</dd></div><div><dt>Deadhead</dt><dd>${fmtN(m.dh)} mi</dd></div><div><dt>Net $/mi</dt><dd>$${m.net.toFixed(2)}</dd></div>
+        <div><dt>Weight</dt><dd>${fmtN(L.wt)} lb</dd></div><div><dt>Length</dt><dd>${L.len} ft</dd></div><div><dt>Pickup</dt><dd>${fmtT(L.puStart)}</dd></div>
+      </dl>
+      <div class="meta"><span>${esc(C[L.o].n)} → ${esc(C[L.d].n)}</span><span>${esc(L.source)}${L.also.length?` +${L.also.length}`:""}</span></div>
+      <div class="meta"><span>Score ${m.score.toFixed(1)}</span><span>${esc(L.broker)}</span></div>
+      <div class="scorebar"><i style="width:${Math.round(m.score/maxScore*100)}%"></i></div>
+      <div class="two"><button type="button" data-pin="${L.id}">${L.id===pinned?"In route ✕":"+ Route"}</button><button type="button" class="primary" data-res="${L.id}">Reserve</button></div>
+    </article>`;}).join(""):empty;
+  $("tbody").innerHTML=M.length?M.slice(0,150).map(m=>{const L=m.L;
+    return`<tr><td class="num">${m.score.toFixed(1)}</td><td>${m.lane?'<span class="star">★</span> ':""}${esc(C[L.o].label)} → ${esc(C[L.d].label)}</td><td>${L.equip}</td><td>${fmtT(L.puStart)}</td><td class="num">${fmtN(L.miles)}</td><td class="num">${fmtN(m.dh)}</td><td class="num">${fmt$(L.rate)}</td><td class="num">${m.rpm.toFixed(2)}</td><td class="num">${m.net.toFixed(2)}</td><td class="num">${fmtN(L.wt)}</td><td class="num">${L.len}'</td><td>${esc(L.source)}${L.also.length?` +${L.also.length}`:""}</td><td>${esc(L.broker)}</td><td><button type="button" class="primary" data-res="${L.id}">Reserve</button></td></tr>`;}).join(""):`<tr><td colspan="14">${empty}</td></tr>`;
+  renderRoute(S,now);
+}
+$("cardsView").onclick=e=>{const rb=e.target.closest("button[data-res]");if(rb){reserveById(rb.dataset.res);return;}const b=e.target.closest("button[data-pin]");if(!b)return;const id=b.dataset.pin;
+  if(pinned===id){pinned=null;log(`Removed ${id} from the route`,"route");}else{pinned=id;log(`Added ${id} as the first stop of the route`,"route");}render();};
+
+/* route map: auto-zoomed to the route, coarse lower-48 outline, curved legs, collision-free labels */
+const US=[[-124.7,48.4],[-123.9,46.2],[-124.2,42],[-124.4,40.4],[-122.5,37.7],[-120.6,34.6],[-117.1,32.5],[-114.7,32.7],[-111,31.3],[-108.2,31.3],[-106.5,31.8],[-104.5,29.6],[-103,29],[-101.4,29.8],[-99.5,27.5],[-97.4,25.9],[-97.4,27.8],[-94.7,29.4],[-93.8,29.7],[-91,29.2],[-89.4,29],[-89.5,30.2],[-88,30.4],[-85.3,29.7],[-84,30],[-82.8,28],[-81.8,26.1],[-80.4,25.2],[-80,26.7],[-81.3,30.3],[-81,31.9],[-79.2,33.2],[-77.9,33.9],[-75.5,35.3],[-76,37],[-75.2,38.5],[-74,40.5],[-72,41],[-70,41.6],[-70.7,42.7],[-70.2,43.7],[-67,44.8],[-67.8,47.1],[-69.2,47.4],[-71.5,45],[-74.9,45],[-76.5,44.2],[-79.2,43.4],[-79,42.8],[-82.4,41.7],[-83.5,42],[-82.5,43],[-82.4,45],[-84.8,46.5],[-88,48.2],[-89.6,48],[-95.1,49],[-123.3,49]];
+function drawMap(S,R){
+  const W=640,HH=380,K=Math.cos(38*Math.PI/180),F='font-family="Plus Jakarta Sans, sans-serif"';
+  const P=(lon,lat)=>[lon*K,-lat];
+  const ids=[S.loc];R.steps.forEach(st=>{ids.push(st.from,st.L.o,st.L.d);});
+  const pts=ids.map(i=>P(C[i].lon,C[i].lat));
+  const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);
+  const cx=(Math.min(...xs)+Math.max(...xs))/2,cy=(Math.min(...ys)+Math.max(...ys))/2;
+  let w=Math.max(Math.max(...xs)-Math.min(...xs),9*K)*1.4,h=Math.max(Math.max(...ys)-Math.min(...ys),5)*1.5;
+  if(w/h>W/HH)h=w*HH/W;else w=h*W/HH;
+  const sc=W/w,T=(lon,lat)=>{const[p,q]=P(lon,lat);return[(p-(cx-w/2))*sc,(q-(cy-h/2))*sc];};
+  const f=n=>n.toFixed(1);
+  let g="";
+  for(let lon=-125;lon<=-65;lon+=5){const a=T(lon,24),b=T(lon,50);g+=`<line x1="${f(a[0])}" y1="${f(a[1])}" x2="${f(b[0])}" y2="${f(b[1])}"/>`;}
+  for(let lat=25;lat<=50;lat+=5){const a=T(-126,lat),b=T(-64,lat);g+=`<line x1="${f(a[0])}" y1="${f(a[1])}" x2="${f(b[0])}" y2="${f(b[1])}"/>`;}
+  const outline="M"+US.map(([lo,la])=>T(lo,la).map(f).join(" ")).join("L")+"Z";
+  const onRoute=new Set(ids);
+  const others=C.filter(c=>!onRoute.has(c.i)).map(c=>{const[x,y]=T(c.lon,c.lat);return(x<-10||x>W+10||y<-10||y>HH+10)?"":`<circle cx="${f(x)}" cy="${f(y)}" r="1.8" fill="#7F90B2" opacity=".55"/>`;}).join("");
+  const shorten=(a,b,r)=>{const dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy)||1;return[a[0]+dx/L*r,a[1]+dy/L*r];};
+  let legs="",badges="",n=0;
+  const curve=(a,b,bend)=>{const mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2,dx=b[0]-a[0],dy=b[1]-a[1];const c=[mx-dy*bend,my+dx*bend];return{c,mid:[.25*a[0]+.5*c[0]+.25*b[0],.25*a[1]+.5*c[1]+.25*b[1]]};};
+  R.steps.forEach(st=>{
+    const A=T(C[st.from].lon,C[st.from].lat),B=T(C[st.L.o].lon,C[st.L.o].lat),D=T(C[st.L.d].lon,C[st.L.d].lat);
+    if(st.dh>0){const s=shorten(A,B,7),e=shorten(B,A,7);legs+=`<path d="M${f(s[0])} ${f(s[1])}L${f(e[0])} ${f(e[1])}" stroke="#FFB36B" stroke-width="1.8" stroke-dasharray="5 5" fill="none" opacity=".9"/>`;}
+    n++;const s=shorten(B,D,8),e=shorten(D,B,10),cv=curve(s,e,.14);
+    const d=`M${f(s[0])} ${f(s[1])}Q${f(cv.c[0])} ${f(cv.c[1])} ${f(e[0])} ${f(e[1])}`;
+    legs+=`<path d="${d}" stroke="#5AA9FF" stroke-width="9" stroke-linecap="round" fill="none" opacity=".16"/><path d="${d}" stroke="url(#lg)" stroke-width="2.6" stroke-linecap="round" fill="none" marker-end="url(#ar)"/>`;
+    badges+=`<g transform="translate(${f(cv.mid[0])} ${f(cv.mid[1])})"><rect x="-13" y="-9" width="26" height="18" rx="9" fill="#0B1A3E" stroke="#5AA9FF" stroke-width="1.2"/><text y="4" text-anchor="middle" font-size="10" font-weight="700" fill="#EEF3FF" ${F}>A${n}</text></g>`;
+  });
+  // nodes + labels with collision avoidance
+  const boxes=[],nodes=[];const seen=new Set();
+  ids.forEach(i=>{if(seen.has(i))return;seen.add(i);const[x,y]=T(C[i].lon,C[i].lat);nodes.push({i,x,y});boxes.push([x-8,y-8,x+8,y+8]);});
+  const hit=b=>boxes.some(o=>b[0]<o[2]&&b[2]>o[0]&&b[1]<o[3]&&b[3]>o[1])||b[0]<2||b[2]>W-2||b[1]<2||b[3]>HH-2;
+  let dots="",lbl="";
+  nodes.forEach(({i,x,y})=>{
+    const home=i===S.loc;
+    dots+=home?`<circle cx="${f(x)}" cy="${f(y)}" r="12" fill="#FF9A3D" opacity=".18"/><circle cx="${f(x)}" cy="${f(y)}" r="6.5" fill="#FFFFFF" stroke="#FF9A3D" stroke-width="3"/>`
+              :`<circle cx="${f(x)}" cy="${f(y)}" r="5.5" fill="#0B1A3E" stroke="#5AA9FF" stroke-width="2.4"/>`;
+  });
+  nodes.forEach(({i,x,y})=>{
+    const name=C[i].n+(i===S.loc?" · Start":""),tw=name.length*6.4+4,th=14;
+    const opts=[[11,4,"start"],[-11,4,"end"],[0,-13,"middle"],[0,22,"middle"],[10,-10,"start"],[-10,-10,"end"],[10,18,"start"],[-10,18,"end"]];
+    let pick=opts[0],box=null;
+    for(const o of opts){const bx=o[2]==="start"?x+o[0]:o[2]==="end"?x+o[0]-tw:x-tw/2,b=[bx,y+o[1]-11,bx+tw,y+o[1]-11+th];if(!hit(b)){pick=o;box=b;break;}}
+    if(!box){const o=pick,bx=x+o[0];box=[bx,y+o[1]-11,bx+tw,y+o[1]+3];}
+    boxes.push(box);
+    lbl+=`<text x="${f(x+pick[0])}" y="${f(y+pick[1])}" text-anchor="${pick[2]}" font-size="11.5" font-weight="600" fill="${i===S.loc?"#FFD2A8":"#EEF3FF"}" stroke="#0A1530" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round" ${F}>${esc(name)}</text>`;
+  });
+  const legend=`<g transform="translate(14 ${HH-22})" font-size="10.5" fill="#A8B7D4" ${F}><rect x="-6" y="-12" width="250" height="24" rx="12" fill="#0A1530" opacity=".75"/><line x1="4" y1="0" x2="26" y2="0" stroke="#5AA9FF" stroke-width="2.6" stroke-linecap="round"/><text x="32" y="3.5">Loaded</text><line x1="84" y1="0" x2="106" y2="0" stroke="#FFB36B" stroke-width="1.8" stroke-dasharray="5 5"/><text x="112" y="3.5">Empty miles</text><circle cx="186" cy="0" r="5" fill="#FFFFFF" stroke="#FF9A3D" stroke-width="2.5"/><text x="196" y="3.5">Start</text></g>`;
+  return`<svg class="map" viewBox="0 0 ${W} ${HH}" role="img" aria-label="Route map from ${esc(C[S.loc].label)}">
+    <defs><linearGradient id="lg" x1="0" x2="1"><stop offset="0" stop-color="#3A8DFF"/><stop offset="1" stop-color="#8CCBFF"/></linearGradient>
+    <marker id="ar" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8CCBFF"/></marker>
+    <radialGradient id="mbg" cx="50%" cy="45%" r="75%"><stop offset="0" stop-color="#13285A"/><stop offset="1" stop-color="#091430"/></radialGradient></defs>
+    <rect width="${W}" height="${HH}" fill="url(#mbg)"/>
+    <g stroke="#FFFFFF" stroke-opacity=".05" stroke-width="1">${g}</g>
+    <path d="${outline}" fill="#5AA9FF" fill-opacity=".05" stroke="#5AA9FF" stroke-opacity=".35" stroke-width="1.2" stroke-linejoin="round"/>
+    ${others}${legs}${dots}${badges}${lbl}${legend}</svg>`;
+}
+function proj(c){return[(c.lon+125)/(125-66)*600+10,(49.5-c.lat)/(49.5-24)*300+18];}
+function renderRoute(S,now){
+  const R=pool.size?buildRoute(S,now):null;
+  lastRoute=R;$("reserveAll").disabled=!R;
+  const slots=[0,1,2,3].map(k=>{const st=R&&R.steps[k];
+    if(!st)return`<div class="slot empty"><span class="sid" style="position:absolute;top:8px;left:8px">A${k+1}</span><span class="plus">+</span><span class="hint">Open slot</span></div>`;
+    return`<div class="slot full${st.L.id===pinned?" pin":""}"><span class="sid">A${k+1}</span><span class="dotg"></span><b>${esc(C[st.L.o].n)} → ${esc(C[st.L.d].n)}</b><span>${EQ[st.L.equip].name} · ${fmtN(st.L.miles)} mi</span><span>${fmtN(st.L.wt)} lb</span><span class="mt"><b>${fmt$(st.L.rate)}</b></span><span class="sid">${st.L.id}</span></div>`;});
+  $("trailer").innerHTML=slots.join("");
+  const last=R&&R.steps[R.steps.length-1];
+  $("laneTo").textContent=last?C[last.L.d].s:"—";$("laneToC").textContent=last?C[last.L.d].n:"Next drop";
+  if(!R){$("kpis").innerHTML="";$("routeSub").textContent="";$("route").innerHTML=`<div class="empty">${pool.size?`No chain found from ${esc(C[S.loc].label)} within these filters and hours-of-service limits.`:"Run a scan to build a route."}</div>`;return;}
+  const at=h=>fmtT(now+h*H);
+  $("kpis").innerHTML=`<div class="kpi"><div class="k">Total revenue</div><div class="v">${fmt$(R.rev)}</div></div>
+    <div class="kpi"><div class="k">$ per total mile</div><div class="v">$${(R.rev/R.total).toFixed(2)}</div></div>
+    <div class="kpi"><div class="k">Total miles</div><div class="v">${fmtN(R.total)}</div></div>
+    <div class="kpi"><div class="k">Fuel cost</div><div class="v">−${fmt$(R.fc)}</div></div>
+    <div class="kpi"><div class="k">Net after fuel</div><div class="v g">${fmt$(R.net)}</div></div>
+    <div class="kpi"><div class="k">Finish</div><div class="v">${(R.end/24).toFixed(1)} days</div></div>`;
+  $("routeSub").textContent=`${R.steps.length} load${R.steps.length>1?"s":""} · ${fmtN(R.empty)} empty mi · ${R.breaks} breaks · ${R.resets} resets`;
+  let html="",n=0;
+  for(const st of R.steps){
+    if(st.dh>0)html+=`<div class="leg dh"><div class="ix">–</div><div><div class="what">Deadhead ${esc(C[st.from].label)} → ${esc(C[st.L.o].label)}</div><div class="sub">${fmtN(st.dh)} mi empty · arrive ${at(st.arrive)}</div></div><div class="amt">−${fmt$(fuel(st.dh,S))}</div></div>`;
+    n++;const hos=[st.breaks?`${st.breaks}× 30‑min break`:"",st.resets?`${st.resets}× 10‑h reset`:""].filter(Boolean).join(" · ");
+    html+=`<div class="leg"><div class="ix">A${n}</div><div><div class="what">${esc(C[st.L.o].label)} → ${esc(C[st.L.d].label)}</div>
+      <div class="sub">${st.L.id} · ${fmtN(st.L.miles)} mi · pick up ${at(st.pickup)} · deliver ${at(st.deliverArr)}</div>
+      ${hos?`<span class="hos">HOS: ${hos}</span>`:""}${st.late?' <span class="hos" style="color:var(--red);background:var(--red-soft)">Misses pickup window</span>':""}</div>
+      <div class="amt">${fmt$(st.L.rate)}<div class="sub">$${(st.L.rate/st.L.miles).toFixed(2)}/mi</div></div></div>`;
+  }
+  $("route").innerHTML=`<div class="routegrid"><div>${html}</div><div class="mapwrap">${drawMap(S,R)}</div></div>`;
+}
+
+/* messy postings */
+const ALIAS={ATL:"Atlanta",CLT:"Charlotte",DFW:"Dallas",CHI:"Chicago",NOLA:"New Orleans",JAX:"Jacksonville",MEM:"Memphis",NASH:"Nashville",STL:"St. Louis",KC:"Kansas City",PHX:"Phoenix",HOU:"Houston",IND:"Indianapolis",LAX:"Los Angeles",SLC:"Salt Lake City"};
+function findCities(line){
+  const hits=[];const low=line.toLowerCase();
+  [...C].sort((a,b)=>b.n.length-a.n.length).forEach(c=>{const idx=low.indexOf(c.n.toLowerCase());if(idx>=0&&!hits.some(h=>idx>=h.pos&&idx<h.pos+h.len))hits.push({i:c.i,pos:idx,len:c.n.length});});
+  for(const a in ALIAS){const m=new RegExp("\\b"+a+"\\b").exec(line);if(m){const c=C.find(x=>x.n===ALIAS[a]);if(c&&!hits.some(h=>h.i===c.i))hits.push({i:c.i,pos:m.index,len:a.length});}}
+  return hits.sort((a,b)=>a.pos-b.pos).map(h=>h.i);
+}
+function parseLine(line,now){
+  const out={text:line,missing:[]};const cs=findCities(line);out.o=cs[0];out.d=cs[1];
+  if(/\bbox ?truck\b|\bBT\b/i.test(line))out.equip="BT";else if(/\bcargo van\b|\bsprinter\b|\bCV\b/i.test(line))out.equip="CV";
+  else if(/\breefer|\brfr\b/i.test(line))out.equip="R";else if(/\bflat ?bed\b|\bFB\b/i.test(line))out.equip="F";else if(/\bstep ?deck\b|\bSD\b/i.test(line))out.equip="SD";else if(/\bpower only\b|\bPO\b/i.test(line))out.equip="PO";else if(/\bdry van\b|\bvan\b|\bV\b/i.test(line))out.equip="V";
+  let m;
+  if((m=/(\d+(?:\.\d+)?)\s*\/\s*mi/i.exec(line)))out.rpm=parseFloat(m[1]);
+  else if((m=/\$\s?([\d,]+(?:\.\d+)?)/.exec(line))||(m=/rate\s*:?\s*([\d,]+)/i.exec(line))){const v=parseFloat(m[1].replace(/,/g,""));if(v<15)out.rpm=v;else out.rate=v;}
+  if((m=/(\d+(?:\.\d+)?)\s*k\b/i.exec(line)))out.wt=Math.round(parseFloat(m[1])*1000);else if((m=/([\d,]{4,})\s*(?:lbs?|#)/i.exec(line)))out.wt=parseInt(m[1].replace(/,/g,""));
+  if((m=/\b(\d{2})\s*(?:'|ft\b|foot\b)/i.exec(line))||(m=/\b(?:van|reefer)\s+(\d{2})\b/i.exec(line)))out.len=parseInt(m[1]);
+  const base=new Date(now);let pu=null;const ampm=/\bpm\b/i.test(line)?14:8;
+  if((m=/\b(\d{1,2})\/(\d{1,2})(?:\s+(\d{3,4}))?/.exec(line))){const d=new Date(base.getFullYear(),+m[1]-1,+m[2]);if(m[3]){const t=m[3].padStart(4,"0");d.setHours(+t.slice(0,2),+t.slice(2));}else d.setHours(8);pu=d.getTime();}
+  else if(/\b(tmrw|tomorrow)\b/i.test(line)){const d=new Date(base);d.setDate(d.getDate()+1);d.setHours(ampm,0,0,0);pu=d.getTime();}
+  else if(/\btoday\b/i.test(line)){const d=new Date(base);d.setHours(ampm,0,0,0);if(d.getTime()<now)d.setTime(now+H);pu=d.getTime();}
+  out.puStart=pu;const br=BROKERS.find(b=>line.toLowerCase().includes(b.toLowerCase()));
+  if(out.o==null)out.missing.push("origin");if(out.d==null)out.missing.push("destination");if(!out.equip)out.missing.push("equipment");
+  if(out.rate==null&&out.rpm==null)out.missing.push("rate");if(pu==null)out.missing.push("pickup");
+  if(!out.missing.length){
+    const miles=D[out.o][out.d],rate=out.rate!=null?out.rate:Math.round(out.rpm*miles/5)*5;
+    out.load={id:"LD-"+(1000+seq++),source:"Pasted posting",broker:br||"Unknown broker",o:out.o,d:out.d,equip:out.equip,miles,rate,puStart:pu,puEnd:pu+4*H,len:out.len||({BT:24,CV:12}[out.equip]||53),wt:out.wt||({BT:6000,CV:2000}[out.equip]||40000),posted:now,born:tick,updated:-1,also:[]};
+    const why=rejectReason(out.load,now);if(why)out.reject={missing:"missing fields",zero:"zero miles",badRate:"impossible rate",past:"pickup already passed"}[why];
+    else if(pool.has(keyOf(out.load)))out.reject="already in pool";
+  }
+  return out;
+}
+$("parseBtn").onclick=()=>{
+  const now=Date.now();parsedBuf=$("raw").value.split(/\n+/).map(s=>s.trim()).filter(Boolean).map(l=>parseLine(l,now));
+  $("parsed").innerHTML=parsedBuf.map(p=>{const ok=p.load&&!p.reject,L=p.load;
+    const body=L?`${esc(C[L.o].label)} → ${esc(C[L.d].label)} · ${L.equip} · ${fmtN(L.miles)} mi · ${fmt$(L.rate)} · ${fmtN(L.wt)} lb · ${L.len}' · ${fmtT(L.puStart)}`:"—";
+    const st=ok?"Valid":p.reject?`Rejected: ${p.reject}`:`Missing: ${p.missing.join(", ")}`;
+    return`<div class="pl ${ok?"":"bad"}"><div style="min-width:0;flex:1"><div>${body}</div><code>${esc(p.text)}</code></div><div class="st">${st}</div></div>`;}).join("")||'<div class="hint">Nothing to parse.</div>';
+  $("addParsed").disabled=!parsedBuf.some(p=>p.load&&!p.reject);
+};
+$("addParsed").onclick=()=>{
+  const now=Date.now(),n=ingest(parsedBuf.filter(p=>p.load&&!p.reject).map(p=>p.load),now);
+  parsedBuf=[];$("addParsed").disabled=true;$("parsed").innerHTML=`<div class="hint">Added ${n} load${n===1?"":"s"} to the pool. They appear in matches if they pass your filters.</div>`;
+  log(`Added ${n} pasted posting${n===1?"":"s"} to the pool`,"add");if(!lastScan)lastScan=now;render();
+};
+
+/* ---------- account, profile, carriers, reservations, alerts ---------- */
+let me=null,lastRoute=null,alertsOn=false,alertFrom=0,audioCtx=null,toastTimer=null,upSig="",doneSig="";
+const alerted=new Set(),armed=new Map();
+let profile={name:"",dot:"",mc:"",tag:"",phone:""};
+ICO.alert='<path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21h4"/>';
+const store={db:null,uid:null,q:{},
+  local(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem("lanescout-"+k)||"null");localStorage.setItem("lanescout-"+k,JSON.stringify(v));}catch(e){return null;}},
+  save(k,v){this.local(k,v);if(!this.db)return;const ref=this.db.doc("data/users/"+this.uid+"/"+k),body={v:JSON.parse(JSON.stringify(v))};
+    this.q[k]=(this.q[k]||Promise.resolve()).then(()=>ref.set(body)).catch(e=>{if(e&&e.code==="quota_exceeded")showToast("Your saved data is full. Remove some completed loads.");});}
+};
+function syncRes(){reservedSet=new Set(reservations.map(r=>r.id));}
+function applyKey(k,v){if(v==null)return;if(k==="carriers"&&Array.isArray(v))mine=v.filter(x=>typeof x==="string");if(k==="profile"&&typeof v==="object")profile={...profile,...v};if(k==="reservations"&&Array.isArray(v))reservations=v;syncRes();}
+["carriers","profile","reservations"].forEach(k=>applyKey(k,store.local(k)));
+
+function showToast(text,action){const t=$("toast");t.textContent="";const s=document.createElement("span");s.textContent=text;t.append(s);
+  if(action){const b=document.createElement("button");b.type="button";b.textContent=action.label;b.onclick=()=>{t.hidden=true;action.fn();};t.append(b);}
+  const x=document.createElement("button");x.type="button";x.textContent="Close";x.onclick=()=>{t.hidden=true;};t.append(x);
+  t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>{t.hidden=true;},action?12000:6000);}
+
+/* account */
+async function initAccount(){
+  const c=window.claude;
+  if(c&&c.use){try{
+    const[user,db]=await Promise.all([c.use("user"),c.use("db")]);
+    if(user)me=await user.me();
+    if(db&&me&&me.id){
+      const keys=["carriers","profile","reservations"];
+      const got=await Promise.race([Promise.all(keys.map(k=>db.doc("data/users/"+me.id+"/"+k).get().then(s=>[k,s]))),new Promise(r=>setTimeout(()=>r(null),10000))]);
+      if(got){store.db=db;store.uid=me.id;
+        for(const[k,s]of got){if(s.exists)applyKey(k,s.data().v);else{const loc=store.local(k);if(loc!=null&&!(Array.isArray(loc)&&!loc.length))store.save(k,loc);}}}
+    }
+  }catch(e){}}
+  renderAcct();fillProfileForm();renderCarriers();upSig="";render();
+}
+function renderAcct(){const el=$("acct");el.textContent="";const s=document.createElement("span");
+  if(store.db&&me){const img=document.createElement("img");img.src=me.avatarUrl;img.alt="";s.textContent=`Signed in as ${me.name||"you"}. Saved to your account on every device.`;el.append(img,s);}
+  else{s.textContent="Not signed in here. Saved in this browser only.";el.append(s);}}
+
+/* profile */
+function fillProfileForm(){$("pName").value=profile.name||"";$("pDot").value=profile.dot||"";$("pMc").value=profile.mc||"";$("pTag").value=profile.tag||"";$("pPhone").value=profile.phone||"";}
+function profileComplete(){return!!(profile.name&&profile.dot&&profile.mc&&profile.tag);}
+function renderProfileView(){
+  const n=profile.name||"";$("drvName").textContent=n||"Add your name below";
+  $("drvInit").textContent=n?n.split(/\s+/).filter(Boolean).map(w=>w[0]).slice(0,2).join("").toUpperCase():"?";
+  $("tagVal").textContent=profile.tag||"—";
+  $("truckTitle").textContent=(profile.tag?profile.tag+" ":"")+"load matching";
+  $("pState").textContent=profileComplete()?"Profile complete. It is shared with the carrier when you reserve.":"Add name, USDOT, MC and truck tag so carriers can confirm your bookings.";
+}
+$("pSave").onclick=()=>{
+  const p={name:$("pName").value.trim(),dot:$("pDot").value.replace(/\D/g,""),mc:$("pMc").value.replace(/\D/g,""),tag:$("pTag").value.trim().toUpperCase(),phone:$("pPhone").value.trim()};
+  if(p.dot&&(p.dot.length<5||p.dot.length>8)){showToast("A USDOT number has 5 to 8 digits. Check it and save again.");return;}
+  if(p.mc&&(p.mc.length<4||p.mc.length>8)){showToast("An MC number has 4 to 8 digits. Check it and save again.");return;}
+  profile=p;fillProfileForm();store.save("profile",profile);showToast("Profile saved");log("Driver profile saved","route");render();
+};
+$("pClear").onclick=()=>{const b=$("pClear");
+  if(b.dataset.armed){delete b.dataset.armed;b.textContent="Clear";profile={name:"",dot:"",mc:"",tag:"",phone:""};fillProfileForm();store.save("profile",profile);showToast("Profile cleared");render();return;}
+  b.dataset.armed="1";b.textContent="Click again to clear";setTimeout(()=>{if(b.dataset.armed){delete b.dataset.armed;b.textContent="Clear";}},4000);};
+
+/* my carriers */
+function renderCarriers(){$("carrierChips").innerHTML=mine.length?mine.map((n,i)=>`<span class="chip">${esc(n)}<button type="button" data-rm="${i}" aria-label="Remove ${esc(n)}">×</button></span>`).join(""):'<span class="hint">No carriers yet. Added names also appear in the simulated feed.</span>';}
+function addCarrier(){const v=$("carrierIn").value.trim().replace(/\s+/g," ");if(!v)return;
+  if(!mine.some(m=>m.toLowerCase()===v.toLowerCase())){mine=[...mine,v];store.save("carriers",mine);log(`Added ${v} to My carriers`,"add");}
+  $("carrierIn").value="";renderCarriers();render();}
+$("carrierAdd").onclick=addCarrier;
+$("carrierIn").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();addCarrier();}});
+$("carrierChips").onclick=e=>{const b=e.target.closest("button[data-rm]");if(!b)return;const n=mine[+b.dataset.rm];mine=mine.filter((_,i)=>i!==+b.dataset.rm);store.save("carriers",mine);log(`Removed ${n} from My carriers`,"add");renderCarriers();render();};
+
+/* reserve */
+function snap(L){return{id:L.id,o:L.o,d:L.d,equip:L.equip,miles:L.miles,rate:L.rate,puStart:L.puStart,broker:L.broker,source:L.source,wt:L.wt,len:L.len,status:"upcoming",reservedAt:Date.now(),contact:"",notified:null,sent:null,doneAt:null,auto:false};}
+function findLoad(id){for(const L of pool.values())if(L.id===id)return L;return null;}
+function reserveLoads(list){
+  const fresh=list.filter(L=>L&&!reservedSet.has(L.id));if(!fresh.length)return;
+  reservations=[...reservations,...fresh.map(snap)];syncRes();if(fresh.some(L=>L.id===pinned))pinned=null;
+  store.save("reservations",reservations);
+  fresh.forEach(L=>log(`Reserved ${L.id} ${C[L.o].n} → ${C[L.d].n}`,"route"));
+  showToast(`Reserved ${fresh.length===1?fresh[0].id:fresh.length+" loads"}. ${profileComplete()?"Your name, USDOT, MC and truck tag are in the carrier message.":"Fill in your driver profile so the carrier message includes your USDOT and MC."}`);
+  upSig="";render();
+}
+function reserveById(id){reserveLoads([findLoad(id)]);}
+$("reserveAll").onclick=()=>{if(lastRoute)reserveLoads(lastRoute.steps.map(s=>s.L));};
+$("tbody").onclick=e=>{const b=e.target.closest("button[data-res]");if(b)reserveById(b.dataset.res);};
+function buildMsg(r){const p=profile,eq=EQ[r.equip]?EQ[r.equip].name:r.equip;return[
+  `Load booking request: ${r.id}`,
+  `Lane: ${C[r.o].label} to ${C[r.d].label}`,
+  `Equipment: ${eq}, ${r.len} ft, ${fmtN(r.wt)} lb`,
+  `Miles: ${fmtN(r.miles)}`,
+  `Pickup: ${new Date(r.puStart).toLocaleString("en-US",{weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}`,
+  `Rate: ${fmt$(r.rate)} ($${(r.rate/r.miles).toFixed(2)}/mi)`,
+  ``,
+  `Driver: ${p.name||"(not set)"}`,`USDOT: ${p.dot||"(not set)"}`,`MC: ${p.mc||"(not set)"}`,`Truck tag: ${p.tag||"(not set)"}`,...(p.phone?[`Phone: ${p.phone}`]:[]),
+  ``,`Please confirm this booking by reply.`].join("\n");}
+function contactKind(c){c=(c||"").trim();if(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c))return"email";if(c.replace(/\D/g,"").length>=10)return"sms";return null;}
+function statusHtml(r){
+  if(r.sent)return`<div class="sent" style="margin-top:6px">Sent ${fmtT(r.sent)}</div>`;
+  if(!r.notified)return"";
+  const n=r.notified,msg=buildMsg(r);let link="";
+  if(n.kind==="email")link=`<a href="mailto:${encodeURIComponent(n.to)}?subject=${encodeURIComponent("Load booking "+r.id)}&body=${encodeURIComponent(msg)}" target="_blank" rel="noopener">Open email app</a> to ${esc(n.to)}`;
+  else if(n.kind==="sms")link=`<a href="sms:${n.to.replace(/[^\d+]/g,"")}?body=${encodeURIComponent(msg)}" target="_blank" rel="noopener">Open text app</a> to ${esc(n.to)}`;
+  else link="Add an email or phone number to open your email or text app.";
+  return`<div class="sub" style="margin-top:6px">${n.copied?"Message copied.":"Copy the message below."} ${link}</div><button type="button" data-act="sent" style="margin-top:6px">Mark as sent</button>`;
+}
+function renderRes(S){
+  const now=Date.now();let changed=false;
+  for(const r of reservations){if(r.status==="upcoming"){const eta=r.puStart+r.miles/S.speed*H;if(now>eta){r.status="completed";r.doneAt=eta;r.auto=true;changed=true;log(`${r.id} moved to Completed after its estimated delivery`,"route");}}}
+  if(changed)store.save("reservations",reservations);
+  const up=reservations.filter(r=>r.status==="upcoming").sort((a,b)=>a.puStart-b.puStart);
+  const done=reservations.filter(r=>r.status==="completed").sort((a,b)=>b.doneAt-a.doneAt);
+  for(const[id,t]of armed)if(t<now)armed.delete(id);
+  const sig=JSON.stringify(up.map(r=>[r.id,r.notified,r.sent,armed.has(r.id)]))+JSON.stringify(profile);
+  if(sig!==upSig){upSig=sig;
+    $("upMeta").textContent=up.length?`${up.length} reserved`:"";
+    $("upList").innerHTML=up.length?up.map(r=>`<div class="res" data-id="${r.id}">
+      <div><b>${esc(C[r.o].label)} → ${esc(C[r.d].label)}</b><div class="sub">${r.id} · ${EQ[r.equip]?EQ[r.equip].name:r.equip} · ${fmtN(r.miles)} mi · ${fmtN(r.wt)} lb</div><div class="sub">Pickup ${fmtT(r.puStart)} · ${fmt$(r.rate)} · ${esc(r.broker)}</div></div>
+      <div><label for="ct_${r.id}">Carrier email or phone</label><input type="text" id="ct_${r.id}" data-ct value="${esc(r.contact||"")}" placeholder="dispatch@carrier.com or 704 555 0100">${statusHtml(r)}</div>
+      <div class="btns"><button type="button" class="primary" data-act="notify">Notify carrier</button><button type="button" data-act="done">Mark completed</button><button type="button" data-act="cancel">${armed.has(r.id)?"Confirm cancel":"Cancel"}</button></div>
+      ${r.notified&&!r.sent?`<details class="msg wide"><summary>Message to carrier</summary><pre>${esc(buildMsg(r))}</pre></details>`:""}
+    </div>`).join(""):'<div class="empty">No reserved loads. Press Reserve on a match, or Reserve all on the route plan.</div>';
+  }
+  const dsig=JSON.stringify(done.map(r=>[r.id,r.doneAt]));
+  if(dsig!==doneSig){doneSig=dsig;
+    const gross=done.reduce((s,r)=>s+r.rate,0),mi=done.reduce((s,r)=>s+r.miles,0);
+    $("doneMeta").textContent=done.length?`${done.length} load${done.length>1?"s":""}`:"";
+    $("doneTotals").innerHTML=`<div><span class="lbl">Gross pay</span><div class="v">${fmt$(gross)}</div></div><div><span class="lbl">Loaded miles</span><div class="v">${fmtN(mi)}</div></div><div><span class="lbl">$ per mile</span><div class="v">${mi?"$"+(gross/mi).toFixed(2):"—"}</div></div>`;
+    $("doneList").innerHTML=done.length?done.map(r=>`<div class="res"><div><b>${esc(C[r.o].label)} → ${esc(C[r.d].label)}</b><div class="sub">${r.id} · ${EQ[r.equip]?EQ[r.equip].name:r.equip} · ${fmtN(r.miles)} mi · ${esc(r.broker)}</div></div><div class="sub">${r.auto?"Estimated delivery":"Marked completed"} ${fmtT(r.doneAt)}</div><div><b>${fmt$(r.rate)}</b></div></div>`).join(""):'<div class="empty">Completed loads appear here after their estimated delivery, or when you mark them done.</div>';
+  }
+}
+$("upList").addEventListener("click",e=>{
+  const b=e.target.closest("button[data-act]");if(!b)return;const row=b.closest(".res");const id=row.dataset.id;const r=reservations.find(x=>x.id===id);if(!r)return;const act=b.dataset.act;
+  if(act==="notify"){
+    const inp=$("ct_"+id);if(inp)r.contact=inp.value.trim();
+    const msg=buildMsg(r),kind=contactKind(r.contact);
+    const finish=copied=>{r.notified={kind,copied,to:r.contact};r.sent=null;store.save("reservations",reservations);log(`Prepared carrier message for ${id}${kind?" to "+r.contact:""}`,"route");upSig="";render();};
+    try{navigator.clipboard.writeText(msg).then(()=>finish(true),()=>finish(false));}catch(err){finish(false);}
+    return;
+  }
+  if(act==="sent"){r.sent=Date.now();log(`Marked carrier message for ${id} as sent`,"route");}
+  else if(act==="done"){r.status="completed";r.doneAt=Date.now();r.auto=false;log(`Marked ${id} completed`,"route");}
+  else if(act==="cancel"){
+    if(armed.has(id)){armed.delete(id);reservations=reservations.filter(x=>x.id!==id);syncRes();log(`Cancelled ${id}. It can show in matches again.`,"route");}
+    else{armed.set(id,Date.now()+4000);setTimeout(()=>{upSig="";renderRes(settings());},4100);}
+  }
+  store.save("reservations",reservations);upSig="";render();
+});
+$("upList").addEventListener("input",e=>{if(e.target.matches("[data-ct]")){const r=reservations.find(x=>x.id===e.target.closest(".res").dataset.id);if(r)r.contact=e.target.value;}});
+$("upList").addEventListener("change",e=>{if(e.target.matches("[data-ct]"))store.save("reservations",reservations);});
+
+/* phone alerts */
+function beep(){if(!audioCtx)return;try{[0,.22].forEach(t=>{const o=audioCtx.createOscillator(),g=audioCtx.createGain(),t0=audioCtx.currentTime+t;o.frequency.value=880;g.gain.setValueAtTime(.0001,t0);g.gain.exponentialRampToValueAtTime(.25,t0+.02);g.gain.exponentialRampToValueAtTime(.0001,t0+.16);o.connect(g);g.connect(audioCtx.destination);o.start(t0);o.stop(t0+.18);});}catch(e){}}
+function checkAlerts(M){
+  if(!alertsOn)return;const min=num("alertMin",75);
+  const hits=M.filter(m=>m.L.born>alertFrom&&!alerted.has(m.L.id)&&m.score>=min).sort((a,b)=>b.score-a.score);
+  if(!hits.length)return;hits.forEach(m=>alerted.add(m.L.id));
+  const t=hits[0],text=`${hits.length} new load${hits.length>1?"s":""} at score ${min}+. Best: ${C[t.L.o].n} → ${C[t.L.d].n}, ${fmt$(t.L.rate)}, score ${Math.round(t.score)}.`;
+  showToast(text,{label:"View",fn:()=>$("matchesCard").scrollIntoView({behavior:"smooth"})});
+  if($("alertVib").checked&&navigator.vibrate&&(!navigator.userActivation||navigator.userActivation.hasBeenActive))try{navigator.vibrate([200,100,200]);}catch(e){}
+  if($("alertBeep").checked)beep();
+  try{if("Notification"in window&&Notification.permission==="granted")new Notification("Scout Lane",{body:text});}catch(e){}
+  log(text,"alert");
+}
+$("alertBtn").onclick=async()=>{
+  const b=$("alertBtn");
+  if(alertsOn){alertsOn=false;b.textContent="Turn on alerts";b.classList.remove("on");b.classList.add("primary");$("alertState").textContent="Alerts are off.";log("Phone alerts turned off","alert");render();return;}
+  try{audioCtx=audioCtx||new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.resume)audioCtx.resume();}catch(e){}
+  for(const L of pool.values())alerted.add(L.id);
+  alertFrom=tick;alertsOn=true;b.textContent="Turn off alerts";b.classList.remove("primary");b.classList.add("on");
+  if(!autoTimer)$("autoBtn").click();
+  let perm="unsupported";
+  try{if("Notification"in window){perm=Notification.permission;if(perm==="default")perm=await Notification.requestPermission();}}catch(e){perm="denied";}
+  const ways=["banner"];if($("alertVib").checked)ways.push("vibration");if($("alertBeep").checked)ways.push("beep");if(perm==="granted")ways.push("system notification");
+  $("alertState").textContent=`Alerts on for score ${num("alertMin",75)}+: ${ways.join(", ")}.${perm==="granted"?"":" System notifications are blocked here, so watch for the banner."}`;
+  log(`Phone alerts on for score ${num("alertMin",75)}+`,"alert");
+};
+
+let deb;document.querySelectorAll(".col:first-child input, .col:first-child select").forEach(el=>{if(el.closest("#acct")||/^(p[A-Z]|carrierIn)/.test(el.id))return;el.addEventListener("input",()=>{clearTimeout(deb);deb=setTimeout(render,150);});});
+setView(view);
+fillProfileForm();renderCarriers();
+fullScan();
+initAccount();
+setInterval(()=>renderRes(settings()),30000);
+$("parseBtn").click();
+})();
+</script>
