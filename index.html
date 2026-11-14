@@ -1,4 +1,5 @@
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Scout Lane</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -326,6 +327,21 @@ svg.map{background:rgba(255,255,255,.04)}
 .chk:has(input:checked){background:var(--green-soft);border-color:var(--green-line);color:var(--ink)}
 .head h1{text-shadow:0 2px 18px rgba(46,128,255,.25)}
 .mapwrap{min-width:0}
+/* nav: clickable rail, bottom tab bar on phones */
+.ri{cursor:pointer;transition:background-color .15s,color .15s}
+.ri:hover{background:rgba(255,255,255,.08);color:var(--ink)}
+.ri:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+section.card,.hero{scroll-margin-top:14px}
+@media (max-width:980px){
+  .rail{display:flex;position:fixed;top:auto;left:0;right:0;bottom:0;height:auto;max-height:none;z-index:40;flex-direction:row;justify-content:space-around;align-items:center;gap:0;
+    padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px));
+    background:rgba(8,16,38,.94);border-right:0;border-top:1px solid rgba(255,255,255,.12);box-shadow:0 -8px 24px rgba(0,0,0,.35)}
+  .rail .logo,.rail .grow{display:none}
+  .ri{width:44px;height:40px}
+  .ri.on{box-shadow:inset 0 -2px 0 var(--green)}
+  .page{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+  .toast{top:calc(12px + env(safe-area-inset-top,0px))}
+}
 .routegrid{grid-template-columns:minmax(0,.9fr) minmax(0,1.15fr)}
 @media (max-width:1150px){.routegrid{grid-template-columns:minmax(0,1fr)}}
 svg.map{display:block;width:100%;height:auto;border-radius:14px;border:1px solid rgba(90,169,255,.18);background:#091430;box-shadow:inset 0 0 40px rgba(0,0,0,.35)}
@@ -1074,6 +1090,32 @@ $("alertBtn").onclick=async()=>{
 };
 
 let deb;document.querySelectorAll(".col:first-child input, .col:first-child select").forEach(el=>{if(el.closest("#acct")||/^(p[A-Z]|carrierIn)/.test(el.id))return;el.addEventListener("input",()=>{clearTimeout(deb);deb=setTimeout(render,150);});});
+/* side bar / phone tab bar navigation */
+(function(){
+  const sec=el=>el&&(el.closest("section")||el);
+  const items=[
+    {label:"Search loads",target:()=>sec($("matchesCard")),after:()=>setTimeout(()=>{try{$("q").focus({preventScroll:true});}catch(e){}},400)},
+    {label:"Top",target:()=>null},
+    {label:"Truck and load build",target:()=>document.querySelector(".hero")},
+    {label:"Route plan",target:()=>sec($("route"))},
+    {label:"Upcoming loads",target:()=>sec($("upList"))},
+    {label:"Completed and earnings",target:()=>sec($("doneList"))},
+    {label:"Preferences",target:()=>sec($("lanes"))}
+  ];
+  const btns=[...document.querySelectorAll(".rail .ri")];let lockUntil=0;
+  btns.forEach((b,k)=>{const it=items[k];if(!it)return;
+    b.setAttribute("role","button");b.tabIndex=0;b.title=it.label;b.setAttribute("aria-label",it.label);
+    const go=()=>{lockUntil=Date.now()+1500;const t=it.target();if(t)t.scrollIntoView({behavior:"smooth",block:"start"});else window.scrollTo({top:0,behavior:"smooth"});setOn(k);if(it.after)it.after();};
+    b.addEventListener("click",go);b.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go();}});});
+  function setOn(k){btns.forEach((b,j)=>{b.classList.toggle("on",j===k);if(j===k)b.setAttribute("aria-current","true");else b.removeAttribute("aria-current");});}
+  let ticking=false;
+  window.addEventListener("scroll",()=>{if(ticking||Date.now()<lockUntil)return;ticking=true;requestAnimationFrame(()=>{ticking=false;
+    if(window.scrollY<80){setOn(1);return;}
+    const line=window.innerHeight*.35;let best=-1,bestTop=-Infinity;
+    items.forEach((it,k)=>{const t=it.target();if(!t)return;const top=t.getBoundingClientRect().top;if(top<=line&&top>bestTop){bestTop=top;best=k;}});
+    if(best>=0)setOn(best);});},{passive:true});
+  setOn(2);
+})();
 setView(view);
 fillProfileForm();renderCarriers();
 fullScan();
